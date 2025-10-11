@@ -12,16 +12,16 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 - **Replication cohort**: matching ID space for strict peptide–autoantigen ID matches.
 
 ## Repro order (discovery → replication)
-# 1) `scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R`
-# 2) `scripts/disease_counts.R`
+1) `scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R`
+2) `scripts/disease_counts.R`
 
-# 3) Build binary/log matrices from raw VirSIGHT/HuSIGHT CSVs
+3) Build binary/log matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
   --vi_csv data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/
    
-# 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
+4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
 Rscript scripts/run_hu_vs_hsv_glm.R \
   --phe data/MIPSA_Asthma_1290.csv \
   --vi_bin results/virus_proteins_binary.txt \
@@ -31,7 +31,7 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
   --aa 1 --bb 1 \
   --out_dir results/Res_hu_vs_vi/
    
-# 5) Collect + annotate + FDR + replication flag
+5) Collect + annotate + FDR + replication flag
 Rscript scripts/collect_annotate_results.R \
   --res_dir results/Res_hu_vs_vi/ \
   --vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -39,7 +39,7 @@ Rscript scripts/collect_annotate_results.R \
   --rep_sig data/rep_hsv.sig \
   --out_prefix results/qtl_hu_vs_vi
 
-# 6) Disease GLMs (combined prevalent + incident)
+6) Disease GLMs (combined prevalent + incident)
 Rscript scripts/run_disease_glm.R \
   --phe data/MIPSA_Asthma_1290.csv \
   --vi_bin results/hsv_proteins_binary.txt \
@@ -48,7 +48,7 @@ Rscript scripts/run_disease_glm.R \
   --dx_inc data/dx_incidence_sums \
   --out_dir results/Res_disease/
 
-# 7) Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
+7) Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/figure4_lasso_prediction.R \
   --train_vi results/virus_proteins_binary.txt \
   --train_hu results/human_fl_binary.txt \
@@ -60,7 +60,7 @@ Rscript scripts/figure4_lasso_prediction.R \
   --species_map "Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV" \
   --out_dir results/Figure4/
 
-# 8) Network plots (Figure 5)
+8) Network plots (Figure 5)
 Rscript scripts/network_plots.R \
   --human_dx results/rep_bin_fchange_FL_dx_com_glm_ann.txt \
   --proid_dx results/rep_bin_fchange_HSV_dx_com_glm_ann.txt \
