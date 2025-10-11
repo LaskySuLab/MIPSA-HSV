@@ -1,33 +1,40 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages({
-  library(argparse); library(data.table); library(dplyr); library(ggplot2)
+  library(optparse); library(data.table); library(dplyr); library(tidyr); library(ggplot2); library(stringr)
 })
 
-parser <- ArgumentParser()
-parser$add_argument("--phe", required=TRUE)
-parser$add_argument("--out_prefix", required=TRUE)
-args <- parser$parse_args()
+option_list <- list(
+  make_option("--phe", type="character", help="MIPSA_Asthma_1290.csv"),
+  make_option("--out_dir", type="character", default="results", help="Output dir")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
+dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
 
-phe <- data.table::fread(args$phe)
+phe <- fread(opt$phe)
+status_vars  <- grep("_Status$", colnames(phe), value = TRUE)
+collect_vars <- grep("_at_collect$", colnames(phe), value = TRUE)
+disease <- gsub("_Status$", "", status_vars)
 
-prev <- grep("_at_collect$", names(phe), value=TRUE)
-inc  <- grep("_flag$", names(phe), value=TRUE)
-dx <- unique(gsub("(_at_collect|_flag)$", "", c(prev, inc)))
+for (prefix in disease) {
+  cols <- c(paste0(prefix,"_at_collect"), paste0(prefix,"_flag"))
+  cols <- cols[cols %in% names(phe)]
+  if (!length(cols)) next
+  phe[, (paste0(prefix,"_combine")) := as.integer(rowSums(.SD, na.rm = TRUE) > 0), .SDcols = cols]
+}
 
-df <- lapply(dx, function(d){
-  pcol <- paste0(d, "_at_collect")
-  icol <- paste0(d, "_flag")
-  pc <- if (pcol %in% names(phe)) sum(phe[[pcol]]==1, na.rm=TRUE) else 0
-  ic <- if (icol %in% names(phe)) sum(phe[[icol]]==1, na.rm=TRUE) else 0
-  data.frame(disease=d, prevalent=pc, incident=ic)
-}) %>% bind_rows()
+dx <- grep("_combine$", colnames(phe), value = TRUE)
+counts <- data.frame(
+  disease = gsub("_combine$", "", dx),
+  prevalent_cases = sapply(dx, function(x) sum(phe[[x]]==1, na.rm = TRUE))
+)
 
-df_long <- tidyr::pivot_longer(df, cols=c(prevalent, incident), names_to="type", values_to="cases")
+p <- counts %>%
+  arrange(desc(prevalent_cases)) %>%
+  head(40) %>%
+  mutate(disease = factor(disease, levels = rev(disease))) %>%
+  ggplot(aes(disease, prevalent_cases)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() + labs(x="", y="Cases", title="Top disease counts (combined prevalent+incident)") +
+  theme_minimal(base_size = 12)
 
-p <- ggplot(df_long, aes(x=reorder(disease, cases), y=cases, fill=type))+
-  geom_col(position="stack")+
-  coord_flip()+
-  scale_fill_manual(values=c("prevalent"="#4575b4","incident"="#d73027"))+
-  labs(x=NULL, y="Cases", title="Disease counts (prevalent vs incident)")+
-  theme_bw(base_size=11)
-ggsave(paste0(args$out_prefix,".png"), p, width=8, height=10, dpi=300)
+ggsave(file.path(opt$out_dir, "figure1_disease_counts.png"), p, width=6, height=8, dpi=300)
