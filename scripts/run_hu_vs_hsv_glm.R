@@ -1,83 +1,87 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages({
-  library(optparse)
-  library(data.table)
-  library(dplyr)
-  library(parallel)
-  source("R/utils_common.R")
-  source("R/utils_qtl.R")
+  library(optparse); library(data.table); library(dplyr); library(purrr); library(stringr)
+  source("R/utils_common.R"); source("R/utils_qtl.R")
 })
 
-opt <- OptionParser(option_list = list(
-  make_option("--cohort",       type="character", help="MGBB-LLF or MGBB-ABC"),
-  make_option("--phenotype",    type="character", help="Phenotype CSV (cohort cleaned)"),
-  make_option("--virus-bin",    type="character", help="TSV from build_binary_matrices.R (HSV)"),
-  make_option("--human-bin",    type="character", help="TSV from build_binary_matrices.R (Hu FL)"),
-  make_option("--aa",           type="integer",   help="Start index (1-based) of human vars to run"),
-  make_option("--bb",           type="integer",   help="End index (1-based) of human vars to run"),
-  make_option("--outdir",       type="character", default="results/glm")
-)) |> parse_args()
+option_list <- list(
+  make_option("--phe",      type="character", help="Phenotype CSV (MIPSA_Asthma_1290.csv)"),
+  make_option("--vi_bin",   type="character", help="virus_proteins_binary.txt"),
+  make_option("--hu_bin",   type="character", help="human_fl_binary.txt"),
+  make_option("--vi_anno",  type="character", help="VirSIGHT FoB CSV (for species/product)"),
+  make_option("--aa",       type="integer", default=1, help="chunk id (1-based)"),
+  make_option("--bb",       type="integer", default=1, help="total chunks"),
+  make_option("--species_list", type="character", default=NULL,
+              help="Comma-separated virus species to include (default: all in vi_anno)"),
+  make_option("--out_dir",  type="character", default="results/Res_hu_vs_vi", help="Output dir"),
+  make_option("--rep_sig",  type="character", default=NULL, help="Optional rep_hsv.sig for filtering/labels")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
+ensure_dir(opt$out_dir)
 
-cfg <- cohort_preset(opt$cohort)
-dir.create(opt$outdir, recursive=TRUE, showWarnings=FALSE)
+phe <- fread(opt$phe); phe[, Subject_Id := as.character(Subject_Id)]
+phe <- build_disease_combine(phe)
+phe <- recode_covariates(phe)
 
-phe <- fread(opt$phenotype)
-phe <- detect_and_unify_id(phe)
+vi_bin <- fread(opt$vi_bin)
+hu_bin <- fread(opt$hu_bin)
 
-vb <- fread(opt$virus_bin)
-hb <- fread(opt$human_bin)
+stopif_missing_cols(hu_bin, "Subject_Id"); stopif_missing_cols(vi_bin, "Subject_Id")
+stopif_missing_cols(phe, "Sample_ID")
 
-vb <- detect_and_unify_id(vb)
-hb <- detect_and_unify_id(hb)
-
-# Merge (right joins keep binaries' samples)
-DT <- phe %>% right_join(vb, by="Sample_ID") %>% right_join(hb, by="Sample_ID") %>% as.data.table()
-DT <- recode_covariates(DT)
-
-hu_vars <- names(hb)[!names(hb) %in% "Sample_ID"]
-vi_vars <- names(vb)[!names(vb) %in% "Sample_ID"]
-
-aa <- max(1L, opt$aa)
-bb <- min(length(hu_vars), opt$bb)
-message("Running human indices: ", aa, ":", bb, " of ", length(hu_vars))
-
-num_cores <- max(1L, detectCores() - 1L)
-cl <- makeCluster(num_cores)
-clusterExport(cl, list("DT","hu_vars","vi_vars"), envir=environment())
-clusterEvalQ(cl, { library(data.table); library(stats) })
-
-run_glm <- function(ii) {
-  abs <- hu_vars[ii]
-  res_list <- lapply(vi_vars, function(vv) {
-    fml <- as.formula(paste0(abs, " ~ ", vv,
-                             " + Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol"))
-    fit <- tryCatch(glm(fml, family = "binomial", data = DT), error=function(e) NULL)
-    if (is.null(fit)) return(c(NA,NA,NA,NA))
-    sm <- summary(fit)
-    # coefficient 2 is the virus term
-    c(sm$coefficients[2, 1:4])
-  })
-  out <- as.data.table(do.call(rbind, res_list))
-  setnames(out, c("Beta","SE","Z","P"))
-  out[, var_id := vi_vars]
-  out[, antibody := abs]
-  out
+vi_anno <- fread(opt$vi_anno)
+if (!"var_id" %in% names(hu_bin)) {
+  # columns are already h#### as in build step
 }
 
-chunks <- parLapply(cl, aa:bb, run_glm)
-stopCluster(cl)
+# select virus set (species filter)
+if (!is.null(opt$species_list)) {
+  keep_species <- str_split(opt$species_list, ",", simplify = TRUE)
+  vi_keep <- vi_anno %>% filter(taxon_species %in% keep_species) %>% pull(UniProt_acc) %>% unique()
+} else {
+  vi_keep <- unique(vi_anno$UniProt_acc)
+}
+vi_keep <- intersect(vi_keep, colnames(vi_bin))
 
-for (i in seq_along(chunks)) {
-  abs <- hu_vars[aa + i - 1L]
-  fp <- file.path(opt$outdir, sprintf("%s_glm_%s.csv", opt$cohort, abs))
-  fwrite(chunks[[i]][order(P)], fp)
+# merge phe + hu + virus
+dt <- phe %>%
+  right_join(hu_bin, by = c("Sample_ID" = "Subject_Id")) %>%
+  right_join(vi_bin[, c("Subject_Id", vi_keep), with=FALSE], by = c("Sample_ID" = "Subject_Id")) %>%
+  as.data.table()
+
+genes <- intersect(colnames(hu_bin)[colnames(hu_bin)!="Subject_Id"], colnames(dt))
+virus_p <- vi_keep
+
+# chunk virus peptides
+chunks <- split(virus_p, cut(seq_along(virus_p), breaks = opt$bb, labels = FALSE))
+virus_chunk <- chunks[[opt$aa]]
+if (length(virus_chunk) == 0) stop("Empty virus chunk for --aa=", opt$aa)
+
+covar <- c("Age_at_collect", "Gender", "BMI_most_recent", "Race_Group", "Smoking", "Alcohol")
+stopif_missing_cols(dt, c("Sample_ID", covar))
+
+res_list <- list()
+for (ab in genes) {
+  if (length(unique(dt[[ab]])) < 2) next
+  for (vp in virus_chunk) {
+    if (length(unique(dt[[vp]])) < 2) next
+    fml <- as.formula(paste0(ab, " ~ ", vp, " + ", paste(covar, collapse = " + ")))
+    s <- glm_safe(fml, dt)
+    if (!is.null(s)) {
+      res_list[[length(res_list)+1]] <- cbind(
+        data.frame(antibody = ab, var_id = vp, stringsAsFactors = FALSE), s
+      )
+    }
+  }
 }
 
-
-
-Rscript scripts/run_hu_vs_hsv_glm.R \
-  --cohort MGBB-LLF \
-  --phenotype data/MIPSA_Asthma_1290.csv \
-  --virus-bin results/binaries/MGBB-LLF_hsv_binary.tsv \
-  --human-bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
-  --aa 1 --bb 2258
+res <- bind_rows(res_list)
+if (nrow(res)) {
+  # annotate
+  res <- res %>%
+    left_join(vi_anno[, .(UniProt_acc, taxon_genus, taxon_species, product)], by = c("var_id" = "UniProt_acc")) %>%
+    mutate(FDR = bh_fdr(P))
+}
+outfile <- file.path(opt$out_dir, sprintf("hu_vs_vi_chunk%02dof%02d.csv", opt$aa, opt$bb))
+fwrite(res, outfile)
+message("Wrote: ", outfile)
