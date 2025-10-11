@@ -1,24 +1,29 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages({
-  library(argparse); library(data.table); library(dplyr); library(ggplot2); library(ggridges)
+  library(optparse); library(data.table); library(dplyr); library(ggridges); library(ggplot2)
 })
 
-parser <- ArgumentParser()
-parser$add_argument("--human_bin", required=TRUE)
-parser$add_argument("--human_annot", required=TRUE)
-parser$add_argument("--out_prefix", required=TRUE)
-args <- parser$parse_args()
+option_list <- list(
+  make_option("--hu_bin", type="character", help="human_fl_binary.txt"),
+  make_option("--hu_anno", type="character", help="HuSIGHT FL FoB CSV"),
+  make_option("--out_dir", type="character", default="results", help="Output dir")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
+dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
 
-H <- fread(args$human_bin); setnames(H, old=names(H)[1], new="Sample_ID")
-A <- fread(args$human_annot)
+hu_bin <- fread(opt$hu_bin)
+hu_anno <- fread(opt$hu_anno)
+if (!"var_id" %in% names(hu_anno)) hu_anno[, var_id := paste0("h", seq_len(.N))]
 
-keep <- intersect(names(H), unique(A$antibody))
-prev <- data.frame(antibody=keep, prev=colMeans(H[, ..keep], na.rm=TRUE))
-prev <- prev %>% left_join(A, by="antibody")
+abs <- setdiff(colnames(hu_bin), "Subject_Id")
+prev <- colMeans(hu_bin[, ..abs], na.rm = TRUE)
+tab  <- data.frame(var_id = abs, seroprev = prev) %>%
+  left_join(hu_anno[, .(var_id, gene_symbol)], by="var_id") %>%
+  mutate(label = ifelse(is.na(gene_symbol), var_id, gene_symbol))
 
-p <- ggplot(prev, aes(x=prev, y=..density..))+
-  geom_histogram(bins=60, alpha=0.8)+
-  scale_x_continuous(labels=scales::percent)+
-  labs(x="Autoantigen prevalence", y="Density", title="HuSIGHT full-length autoantigen prevalence")+
-  theme_bw(base_size=11)
-ggsave(paste0(args$out_prefix,".hist.png"), p, width=7, height=5, dpi=300)
+p <- ggplot(tab, aes(x = seroprev, y = 1)) +
+  geom_density_ridges(fill="grey80", color="grey40", scale=3, rel_min_height=0.01) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(x="Human antibody seroprevalence", y="", title="Human Ab seroprevalence") +
+  theme_minimal(base_size=12) + theme(axis.text.y = element_blank())
+ggsave(file.path(opt$out_dir, "figure2C_hu_ridgeline.png"), p, width=7, height=3, dpi=300)
