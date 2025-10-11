@@ -12,8 +12,8 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 - **Replication cohort**: matching ID space for strict peptide–autoantigen ID matches.
 
 ## Repro order (discovery → replication)
-1) `scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R`
-2) `scripts/disease_counts.R`
+1) `scripts/disease_counts.R` (Figure 1)
+2) `scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R` (Figure 2)
 
 3) Build binary/log matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
