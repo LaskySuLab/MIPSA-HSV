@@ -1,63 +1,45 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages({
-  library(optparse)
-  library(data.table)
-  library(dplyr)
+  library(optparse); library(data.table); library(dplyr)
   source("R/utils_common.R")
-  source("R/utils_qtl.R")
 })
 
-opt <- OptionParser(option_list = list(
-  make_option("--cohort",         type="character", help="MGBB-LLF or MGBB-ABC"),
-  make_option("--virsight-promax",type="character", help="VirSIGHT *Promax_Hits_Fold-Over-Background.csv"),
-  make_option("--husight-fl",     type="character", help="HuSIGHT FullLength *Hits_Fold-Over-Background.csv"),
-  make_option("--outdir",         type="character", default="results/binaries")
-)) |> parse_args()
+opt <- list()
+option_list <- list(
+  make_option("--vi_csv",  type="character", help="VirSIGHT Promax FoB CSV"),
+  make_option("--hu_csv",  type="character", help="HuSIGHT FullLength FoB CSV"),
+  make_option("--out_dir", type="character", default="results", help="Output dir")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
 
-cfg <- cohort_preset(opt$cohort)
-dir.create(opt$outdir, recursive=TRUE, showWarnings=FALSE)
+ensure_dir(opt$out_dir)
 
-# ---- Virus HSV binary ----
-vi <- fread(opt$virsight_promax)
-vi_hsv <- vi[taxon_species %in% HSV_SPECIES]
-# Keep only measurement columns
-mat <- as.data.frame(vi_hsv[, starts_with(cfg$sample_prefix), with=FALSE])
-mat[mat == 1] <- 0
-mat[mat != 0] <- 1
-mat <- as.data.frame(t(mat))
-colnames(mat) <- vi_hsv$UniProt_acc
+# Read raw FoB and convert to binary 0/1 (non-zero -> 1)
+vi <- fread(opt$vi_csv)
+hu <- fread(opt$hu_csv)
 
-# 1% prevalence threshold
-min_sum <- ceiling(0.01 * cfg$n)
-mat_v <- mat %>% dplyr::select(where(~ is.numeric(.) && sum(.) > min_sum))
-mat_v$Sample_ID <- rownames(mat_v)
+# Virus: wide binary with Subject_Id rows
+vi_w <- as.data.frame(t(vi[, 6:ncol(vi)]))
+colnames(vi_w) <- vi$UniProt_acc
+vi_w[vi_w == 1] <- 0
+vi_w[vi_w != 0] <- 1
+vi_w$Subject_Id <- rownames(vi_w)
 
-fwrite(mat_v, file.path(opt$outdir, sprintf("%s_hsv_binary.tsv", opt$cohort)), sep="\t")
+# Human: assign var_id (h1..hN) if absent; wide binary
+if (!"var_id" %in% names(hu)) hu$var_id <- paste0("h", seq_len(nrow(hu)))
+hu_w <- as.data.frame(t(hu[, 11:ncol(hu)]))
+colnames(hu_w) <- hu$var_id
+hu_w[hu_w == 1] <- 0
+hu_w[hu_w != 0] <- 1
+hu_w$Subject_Id <- rownames(hu_w)
 
-# ---- Human FL binary ----
-hu <- fread(opt$husight_fl)
-if (!"var_id" %in% names(hu)) hu[, var_id := paste0("h", .I)]
-mat_h <- as.data.frame(hu[, starts_with(cfg$sample_prefix), with=FALSE])
-mat_h[mat_h == 1] <- 0
-mat_h[mat_h != 0] <- 1
-mat_h <- as.data.frame(t(mat_h))
-colnames(mat_h) <- hu$var_id
+# Save TSVs
+fwrite(as.data.table(vi_w), file.path(opt$out_dir, "virus_proteins_binary.txt"), sep="\t")
+fwrite(as.data.table(hu_w), file.path(opt$out_dir, "human_fl_binary.txt"), sep="\t")
 
-# 1% prevalence
-mat_h2 <- mat_h %>% dplyr::select(where(~ is.numeric(.) && sum(.) > min_sum))
-mat_h2$Sample_ID <- rownames(mat_h2)
-
-fwrite(mat_h2, file.path(opt$outdir, sprintf("%s_human_fl_binary.tsv", opt$cohort)), sep="\t")
-
-# LLF
-Rscript scripts/build_binary_matrices.R \
-  --cohort MGBB-LLF \
-  --virsight-promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --husight-fl     data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv
-
-# ABC
-Rscript scripts/build_binary_matrices.R \
-  --cohort MGBB-ABC \
-  --virsight-promax data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --husight-fl     data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv
-
+# Optional log (if needed later)
+vi_log <- as.data.frame(t(vi[, 6:ncol(vi)])); colnames(vi_log) <- vi$UniProt_acc
+hu_log <- as.data.frame(t(hu[, 11:ncol(hu)])); colnames(hu_log) <- hu$var_id
+vi_log$Subject_Id <- rownames(vi_log); hu_log$Subject_Id <- rownames(hu_log)
+fwrite(as.data.table(vi_log), file.path(opt$out_dir, "hsv_proteins_log.txt"), sep="\t")
+fwrite(as.data.table(hu_log), file.path(opt$out_dir, "human_fl_log.txt"), sep="\t")
