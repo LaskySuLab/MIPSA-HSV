@@ -68,7 +68,7 @@ Rscript scripts/figure4_lasso_prediction.R \
   --train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --test_vi data/ABC_IB1021_VirSIGHT_binary.txt \
   --test_hu data/ABC_IB1021_HuSIGHT_binary.txt \
-  --ab_list PHLDA1:6808,ZNF550:14835,IQCB1:3143,DNAJC12:8069,P3H4:8250 \
+  --ab_list PHLDA1:h6808,ZNF550:h14835,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
   --species_map "Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV" \
   --out_dir results/Figure4/
 
