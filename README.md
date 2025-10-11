@@ -39,7 +39,19 @@ Rscript scripts/collect_annotate_results.R \
   --rep_sig data/rep_hsv.sig \
   --out_prefix results/qtl_hu_vs_vi
 
-6) Disease GLMs (combined prevalent + incident)
+6) Manhattan, Diamond, and Circos plots (Figure 3)
+Rscript scripts/plots_qtl_panels.R \
+  --cohort MGBB-LLF \
+  --annot-rds results/annot/MGBB-LLF_glm_annotated.rds \
+  --prev-human results/annot/MGBB-LLF_prevalence_human.csv \
+  --prev-virus results/annot/MGBB-LLF_prevalence_virus_species.csv
+Rscript scripts/plots_qtl_panels.R \
+  --cohort MGBB-ABC \
+  --annot-rds results/annot/MGBB-ABC_glm_annotated.rds \
+  --prev-human results/annot/MGBB-ABC_prevalence_human.csv \
+  --prev-virus results/annot/MGBB-ABC_prevalence_virus_species.csv
+
+7) Disease GLMs (combined prevalent + incident)
 Rscript scripts/run_disease_glm.R \
   --phe data/MIPSA_Asthma_1290.csv \
   --vi_bin results/hsv_proteins_binary.txt \
@@ -48,7 +60,7 @@ Rscript scripts/run_disease_glm.R \
   --dx_inc data/dx_incidence_sums \
   --out_dir results/Res_disease/
 
-7) Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
+8) Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/figure4_lasso_prediction.R \
   --train_vi results/virus_proteins_binary.txt \
   --train_hu results/human_fl_binary.txt \
@@ -60,7 +72,7 @@ Rscript scripts/figure4_lasso_prediction.R \
   --species_map "Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV" \
   --out_dir results/Figure4/
 
-8) Network plots (Figure 5)
+9) Network plots (Figure 5)
 Rscript scripts/network_plots.R \
   --human_dx results/rep_bin_fchange_FL_dx_com_glm_ann.txt \
   --proid_dx results/rep_bin_fchange_HSV_dx_com_glm_ann.txt \
