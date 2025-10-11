@@ -132,16 +132,4 @@ grid::grid.draw(ComplexHeatmap::Legend(title=expression('-log'[10]*'(P)'), col_f
 dev.off()
 
 
-Rscript scripts/plots_qtl_panels.R \
-  --cohort MGBB-LLF \
-  --annot-rds results/annot/MGBB-LLF_glm_annotated.rds \
-  --prev-human results/annot/MGBB-LLF_prevalence_human.csv \
-  --prev-virus results/annot/MGBB-LLF_prevalence_virus_species.csv
-
-Rscript scripts/plots_qtl_panels.R \
-  --cohort MGBB-ABC \
-  --annot-rds results/annot/MGBB-ABC_glm_annotated.rds \
-  --prev-human results/annot/MGBB-ABC_prevalence_human.csv \
-  --prev-virus results/annot/MGBB-ABC_prevalence_virus_species.csv
-
 
