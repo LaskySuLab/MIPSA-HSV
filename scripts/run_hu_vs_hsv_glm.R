@@ -72,3 +72,12 @@ for (i in seq_along(chunks)) {
   fp <- file.path(opt$outdir, sprintf("%s_glm_%s.csv", opt$cohort, abs))
   fwrite(chunks[[i]][order(P)], fp)
 }
+
+
+
+Rscript scripts/run_hu_vs_hsv_glm.R \
+  --cohort MGBB-LLF \
+  --phenotype data/MIPSA_Asthma_1290.csv \
+  --virus-bin results/binaries/MGBB-LLF_hsv_binary.tsv \
+  --human-bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
+  --aa 1 --bb 2258
