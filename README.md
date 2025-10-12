@@ -13,7 +13,10 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 
 ## Repro order (discovery → replication → prediction → disease association)
 1) Statistics for diseases in the cohorts (Figure 1)
-scripts/disease_counts.R (Figure 1)
+Rscript scripts/disease_counts.R \
+  --llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
+  --abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
+  --out_dir results/Figure1/
 
 2) Statistics for VirSIGHT and HuSIGHT
 scripts/virus_seroprev_plots.R and scripts/human_seroprev_ridgeline.R (Figure 2)
