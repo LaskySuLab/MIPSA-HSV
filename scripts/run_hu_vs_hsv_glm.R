@@ -208,7 +208,7 @@ if (!all(c(opt$llf_phe, opt$llf_vi_bin, opt$llf_hu_bin, opt$llf_vi_promax, opt$l
   fwrite(llf_res, out_all_llf, sep = "\t")
   fwrite(llf_res[P.adj < 0.05], out_sig_llf, sep = "\t")
   
-  # Report cutoff like your code
+  # Report cutoff
   sig_idx <- which(llf_res$P.adj <= 0.05)
   if (length(sig_idx)) {
     pval_cutoff <- max(llf_res$P[sig_idx], na.rm = TRUE)
@@ -299,7 +299,7 @@ if (!all(c(opt$abc_phe, opt$abc_vi_bin, opt$abc_hu_bin, opt$abc_vi_promax, opt$a
     rep_llf <- llf_sig[qtl %in% common]
     rep_abc <- abc_sig[qtl %in% common]
     
-    # Save exactly as your filenames
+    # Save
     fwrite(rep_llf, file.path(opt$out_dir, "rep_hsv.sig"), sep = "\t")
     fwrite(rep_abc, file.path(opt$out_dir, "abc_hsv.rep"), sep = "\t")
     message("Replication complete: N = ", length(common))
