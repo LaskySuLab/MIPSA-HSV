@@ -50,15 +50,15 @@ Rscript scripts/build_binary_matrices.R \
 
 ### Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/run_hu_vs_hsv_glm.R \
-  --llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
-  --llf_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_VirSIGHT/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --llf_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_HuSIGHT_FullLength/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --llf_phe /data/MIPSA_Asthma_1290.csv \
+  --llf_vi_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_hu_fl /data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
   --llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
 \
-  --abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
-  --abc_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_VirSIGHT_Reports_02-25-2025/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --abc_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_HuSIGHT_FullLength_Reports_02-25-2025/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_phe /data/Ab_pheno.csv \
+  --abc_vi_promax /data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl /data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
   --abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
 \
