@@ -278,7 +278,7 @@ if (!all(c(opt$abc_phe, opt$abc_vi_bin, opt$abc_hu_bin, opt$abc_vi_promax, opt$a
   
   # ------------------ Replication (LLF -> ABC) ------------------
   if (exists("llf_res")) {
-    # LLF significant with gene symbols cleaned like your code
+    # LLF significant with gene symbols
     llf_sig <- copy(llf_res[P.adj < 0.05])
     if ("gene_symbol" %in% names(llf_sig)) {
       llf_sig$gene_symbol <- ifelse(
