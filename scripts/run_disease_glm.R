@@ -8,12 +8,10 @@ option_list <- list(
   make_option("--phe",     type="character", help="MIPSA_Asthma_1290.csv"),
   make_option("--vi_bin",  type="character", help="hsv_proteins_binary.txt"),
   make_option("--hu_bin",  type="character", help="human_fl_binary.txt"),
-  make_option("--dx_prev", type="character", help="dx_prevalence_sums"),
-  make_option("--dx_inc",  type="character", help="dx_incidence_sums"),
+  make_option("--dx_count", type="character", help="dx_count_sums"),
   make_option("--out_dir", type="character", default="results/Res_disease", help="Output dir")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
-ensure_dir(opt$out_dir)
 
 phe <- fread(opt$phe); phe[, Subject_Id := as.character(Subject_Id)]
 phe <- build_disease_combine(phe)
