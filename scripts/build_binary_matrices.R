@@ -50,7 +50,7 @@ bin_from_fob <- function(x) as.integer(!is.na(as.numeric(x)) & as.numeric(x) > 1
 apply_min_prevalence <- function(df, min_prev_pct) {
   n <- nrow(df)
   min_sum <- ceiling((min_prev_pct / 100) * n)
-  keep <- vapply(df, function(x) sum(x, na.rm = TRUE) > min_sum, logical(1))
+  keep <- vapply(df, function(x) sum(x, na.rm = TRUE) >= min_sum, logical(1))
   df[, keep, drop = FALSE]
 }
 
