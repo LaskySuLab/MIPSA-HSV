@@ -13,10 +13,10 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 
 ## Repro order (discovery → replication → prediction → disease association)
 1) Statistics for diseases in the cohorts (Figure 1)
-`scripts/disease_counts.R` (Figure 1)
+scripts/disease_counts.R (Figure 1)
 
-2) Statistics for VirSIGHT and HuSiGHT
-`scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R` (Figure 2)
+2) Statistics for VirSIGHT and HuSIGHT
+scripts/virus_seroprev_plots.R and scripts/human_seroprev_ridgeline.R (Figure 2)
 
 3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
