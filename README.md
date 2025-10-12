@@ -66,7 +66,7 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
 --n_cores 12
 
 ### Manhattan, Diamond, and Circos plots (Figure 3)
-Rscript scripts/plots_qtl_panels.R \
+Rscript scripts/plots_pairwise_panels.R \
   --llf_all results/hsv_qtl/llf_hsv_bin_glm_all.tsv \
   --llf_sig results/hsv_qtl/llf_hsv_bin_glm_sig.tsv \
   --llf_vi_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
