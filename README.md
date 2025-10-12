@@ -24,9 +24,18 @@ Rscript scripts/build_binary_matrices.R \
   --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/
 
-3) Statistics for VirSIGHT and HuSIGHT
-scripts/virus_seroprev_plots.R and scripts/human_seroprev_ridgeline.R (Figure 2)
-   
+3) Statistics for VirSIGHT and HuSIGHT (Figure 2)
+Rscript scripts/virus_seroprev_plots.R \
+  --llf_promax /proj/regeps/.../IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_varscore /proj/regeps/.../IB1007_VirSIGHT_VARscores.csv \
+  --abc_promax /proj/regeps/.../IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_varscore /proj/regeps/.../IB1021_VirSIGHT_VARscores.csv \
+  --out_dir results/Figure2 
+Rscript scripts/human_seroprev_ridgeline.R \
+  --llf_hu_fl /proj/regeps/.../IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl /proj/regeps/.../IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --out_dir results/Figure2
+
 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
 Rscript scripts/run_hu_vs_hsv_glm.R \
   --phe data/MIPSA_Asthma_1290.csv \
