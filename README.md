@@ -13,12 +13,14 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 
 ## Repro order (discovery → replication → prediction → disease association)
 1) Statistics for diseases in the cohorts (Figure 1)
+
 Rscript scripts/disease_counts.R \
   --llf_phe /data/MIPSA_Asthma_1290.csv \
   --abc_phe /data/Ab_pheno.csv \
   --out_dir results/Figure1/
 
 2) Statistics for VirSIGHT and HuSIGHT (Figure 2)
+
 Rscript scripts/virus_seroprev_plots.R \
   --llf_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_varscore /data/IB1007_VirSIGHT_VARscores.csv \
@@ -31,6 +33,7 @@ Rscript scripts/human_seroprev_ridgeline.R \
   --out_dir results/Figure2
    
 3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
+
 LLF cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
