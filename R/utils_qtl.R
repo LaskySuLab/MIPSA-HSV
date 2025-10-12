@@ -59,7 +59,7 @@ glm_safe <- function(formula, data) {
   out <- tryCatch(glm(formula, family = "binomial", data = data), error = function(e) NULL)
   if (is.null(out)) return(NULL)
   s <- summary(out)
-  if (nrow(s$coefficients) < 2) return(NULL)
+  if (nrow(s$coefficients) == 8) return(NULL)
   cbind(as.data.frame(s$coefficients[2, 1:4]), row.names = NULL) |>
     setNames(c("Beta", "SE", "Z", "P"))
 }
