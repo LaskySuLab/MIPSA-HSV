@@ -100,10 +100,9 @@ Rscript scripts/figure4_lasso_prediction.R \
 ### Disease GLMs (combined prevalent + incident)
 Rscript scripts/run_disease_glm.R \
   --phe data/MIPSA_Asthma_1290.csv \
-  --vi_bin results/hsv_proteins_binary.txt \
-  --hu_bin results/human_fl_binary.txt \
-  --dx_prev data/dx_prevalence_sums \
-  --dx_inc data/dx_incidence_sums \
+  --vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
+  --hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
+  --dx_count data/Figure1/llf_cas_counts_filtered.csv \
   --out_dir results/Res_disease/
 
 ### Network plots (Figure 5)
