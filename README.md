@@ -13,14 +13,12 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 
 ## Repro order (discovery → replication → prediction → disease association)
 1) Statistics for diseases in the cohorts (Figure 1)
-
 Rscript scripts/disease_counts.R \
   --llf_phe /data/MIPSA_Asthma_1290.csv \
   --abc_phe /data/Ab_pheno.csv \
   --out_dir results/Figure1/
 
 2) Statistics for VirSIGHT and HuSIGHT (Figure 2)
-
 Rscript scripts/virus_seroprev_plots.R \
   --llf_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_varscore /data/IB1007_VirSIGHT_VARscores.csv \
@@ -33,8 +31,7 @@ Rscript scripts/human_seroprev_ridgeline.R \
   --out_dir results/Figure2
    
 3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
-
-LLF cohort
+-LLF cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
   --virsight_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -42,7 +39,7 @@ Rscript scripts/build_binary_matrices.R \
   --out_dir results/binaries \
   --min_prev_pct 1
 
-ABC cohort
+-ABC cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-ABC \
   --virsight_promax /data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -53,17 +50,17 @@ Rscript scripts/build_binary_matrices.R \
 
 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/run_hu_vs_hsv_glm.R \
---llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
---llf_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_VirSIGHT/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---llf_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_HuSIGHT_FullLength/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
---llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
+  --llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
+  --llf_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_VirSIGHT/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_HuSIGHT_FullLength/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
+  --llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
 \
---abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
---abc_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_VirSIGHT_Reports_02-25-2025/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---abc_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_HuSIGHT_FullLength_Reports_02-25-2025/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
---abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
+  --abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
+  --abc_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_VirSIGHT_Reports_02-25-2025/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_HuSIGHT_FullLength_Reports_02-25-2025/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
+  --abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
 \
 --out_dir results/hsv_qtl \
 --n_cores 12
