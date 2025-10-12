@@ -11,11 +11,14 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 - **Phenotypes**: Demographic covariates (Age, Sex/Gender, BMI, Race, Smoking, Alcohol), and disease endpoints (prevalent, incident).
 - **Replication cohort**: matching ID space for strict peptide–autoantigen ID matches.
 
-## Repro order (discovery → replication)
-1) `scripts/disease_counts.R` (Figure 1)
-2) `scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R` (Figure 2)
+## Repro order (discovery → replication → prediction → disease association)
+1) Statistics for diseases in the cohorts (Figure 1)
+`scripts/disease_counts.R` (Figure 1)
 
-3) Build binary/log matrices from raw VirSIGHT/HuSIGHT CSVs
+2) Statistics for VirSIGHT and HuSiGHT
+`scripts/virus_seroprev_plots.R` and `scripts/human_seroprev_ridgeline.R` (Figure 2)
+
+3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
   --vi_csv data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
@@ -28,7 +31,7 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
   --hu_bin results/human_fl_binary.txt \
   --vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --rep_sig data/rep_hsv.sig \
-  --aa 1 --bb 1 \
+  --aa 1 --bb 2258 \
   --out_dir results/Res_hu_vs_vi/
    
 5) Collect + annotate + FDR + replication flag
