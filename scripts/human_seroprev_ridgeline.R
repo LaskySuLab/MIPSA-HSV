@@ -9,7 +9,6 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(ggridges)
   library(viridis)
-  # hrbrthemes optional
 })
 
 # ---------- CLI ----------
@@ -37,23 +36,23 @@ if (use_theme_ipsum) library(hrbrthemes)
 compute_hu_seroprev <- function(hu_df, sample_prefix) {
   hu_df$var_id <- paste0("h", seq_len(nrow(hu_df)))
   sample_cols <- grep(paste0("^", sample_prefix), names(hu_df), value = TRUE)
-
+  
   hu_long <- hu_df |>
     dplyr::select(var_id, UniProt_acc, gene_symbol, all_of(sample_cols)) |>
     pivot_longer(cols = all_of(sample_cols), names_to = "Sample_ID", values_to = "react_value") |>
     mutate(react_cutoff_1 = ifelse(react_value > 1, 1, 0))
-
+  
   hu_sum <- hu_long |>
     group_by(var_id, gene_symbol) |>
     summarise(fl_seroprev = round(mean(react_cutoff_1) * 100, 2), .groups = "drop") |>
     mutate(gene_symbol = fct_rev(as.factor(gene_symbol)))
-
+  
   hu_sum
 }
 
 plot_single_strip <- function(df_sum, title_txt, outfile_png, min_prev = 1, xmax = 60) {
   df_sum$dummy <- "Human Antibodies"
-
+  
   p <- df_sum |>
     filter(fl_seroprev > min_prev) |>
     ggplot(aes(x = fl_seroprev, y = dummy, fill = after_stat(x))) +
@@ -71,7 +70,7 @@ plot_single_strip <- function(df_sum, title_txt, outfile_png, min_prev = 1, xmax
       strip.text.x    = element_text(size = 14, colour = "black"),
       axis.title.x    = element_text(size = 16, colour = "black")
     )
-
+  
   ggsave(outfile_png, p, width = 10, height = 5, dpi = 300)
 }
 
@@ -92,12 +91,6 @@ if (!is.null(opt$rep_sig) && file.exists(opt$rep_sig)) {
 llf_sum <- compute_hu_seroprev(llf_hu, sample_prefix = "AM_")
 # ABC: columns start with "10"
 abc_sum <- compute_hu_seroprev(abc_hu, sample_prefix = "10")
-
-# If you want to constrain to significant antibodies only, uncomment:
-# if (!is.null(rep_abs)) {
-#   llf_sum <- dplyr::filter(llf_sum, var_id %in% rep_abs)
-#   abc_sum <- dplyr::filter(abc_sum, var_id %in% rep_abs)
-# }
 
 # ---------- Plot ----------
 plot_single_strip(
