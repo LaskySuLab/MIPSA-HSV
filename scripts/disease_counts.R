@@ -127,7 +127,7 @@ plot_counts(
   outfile     = file.path(opt$out_dir, "figure1C_llf_disease_counts.png")
 )
 
-# Optional summaries (match your manuscript snippets)
+# Optional summaries
 capture.output(summary(llf$COLLECTION_DATE),
                file = file.path(opt$out_dir, "llf_collection_date_summary.txt"))
 capture.output(summary(llf$FU_endDate),
@@ -160,7 +160,7 @@ plot_counts(
   outfile     = file.path(opt$out_dir, "figure1D_abc_disease_counts.png")
 )
 
-# Optional summaries (match your manuscript snippets)
+# Optional summaries
 capture.output(summary(abc$COLLECTION_DATE),
                file = file.path(opt$out_dir, "abc_collection_date_summary.txt"))
 capture.output(summary(abc$FU_endDate),
