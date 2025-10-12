@@ -50,7 +50,7 @@ bin_from_fob <- function(x) as.integer(!is.na(as.numeric(x)) & as.numeric(x) > 1
 apply_min_prevalence <- function(df, min_prev_pct) {
   n <- nrow(df)
   min_sum <- ceiling((min_prev_pct / 100) * n)
-  keep <- vapply(df, function(x) sum(x, na.rm = TRUE) >= min_sum, logical(1))
+  keep <- vapply(df, function(x) sum(x, na.rm = TRUE) > min_sum, logical(1))
   df[, keep, drop = FALSE]
 }
 
@@ -68,11 +68,11 @@ if (length(sample_cols_vi) == 0) stop("No usable virus sample columns found afte
 # Binary transform (>1 → 1)
 mat_vi <- as.data.frame(vi_hsv[, ..sample_cols_vi])
 mat_vi[] <- lapply(mat_vi, bin_from_fob)
-mat_vi <- as.data.frame(t(mat_vi))
-colnames(mat_vi) <- vi_hsv$UniProt_acc
-rownames(mat_vi) <- NULL
-mat_vi <- apply_min_prevalence(mat_vi, opt$min_prev_pct)
-mat_vi$Sample_ID <- rownames(mat_vi)
+mat_vi1 <- as.data.frame(t(mat_vi))
+colnames(mat_vi1) <- vi_hsv$UniProt_acc
+rownames(mat_vi1) <- NULL
+mat_vi1 <- apply_min_prevalence(mat_vi1, opt$min_prev_pct)
+mat_vi1$Sample_ID <- colnames(mat_vi)
 
 # ---------- Process HuSIGHT Full-Length ----------
 message("Reading HuSIGHT Full-Length file: ", opt$husight_fl)
@@ -84,17 +84,17 @@ if (length(sample_cols_hu) == 0) stop("No usable human sample columns found afte
 
 mat_hu <- as.data.frame(hu[, ..sample_cols_hu])
 mat_hu[] <- lapply(mat_hu, bin_from_fob)
-mat_hu <- as.data.frame(t(mat_hu))
-colnames(mat_hu) <- hu$var_id
-rownames(mat_hu) <- NULL
-mat_hu <- apply_min_prevalence(mat_hu, opt$min_prev_pct)
-mat_hu$Sample_ID <- rownames(mat_hu)
+mat_hu1 <- as.data.frame(t(mat_hu))
+colnames(mat_hu1) <- hu$var_id
+rownames(mat_hu1) <- NULL
+mat_hu1 <- apply_min_prevalence(mat_hu1, opt$min_prev_pct)
+mat_hu1$Sample_ID <- colnames(mat_hu)
 
 # ---------- Write Outputs ----------
 out_virus <- file.path(opt$out_dir, sprintf("%s_hsv_binary.tsv", opt$cohort))
 out_human <- file.path(opt$out_dir, sprintf("%s_human_fl_binary.tsv", opt$cohort))
-fwrite(as.data.table(mat_vi), out_virus, sep = "\t")
-fwrite(as.data.table(mat_hu), out_human, sep = "\t")
+fwrite(as.data.table(mat_vi1), out_virus, sep = "\t")
+fwrite(as.data.table(mat_hu1), out_human, sep = "\t")
 
 message("✔ Done building binary matrices for ", opt$cohort)
 message("  - Virus HSV binary: ", normalizePath(out_virus))
