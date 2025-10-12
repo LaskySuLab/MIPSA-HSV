@@ -18,14 +18,14 @@ Rscript scripts/disease_counts.R \
   --abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
   --out_dir results/Figure1/
 
-2) Statistics for VirSIGHT and HuSIGHT
-scripts/virus_seroprev_plots.R and scripts/human_seroprev_ridgeline.R (Figure 2)
-
-3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
+2) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
   --vi_csv data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/
+
+3) Statistics for VirSIGHT and HuSIGHT
+scripts/virus_seroprev_plots.R and scripts/human_seroprev_ridgeline.R (Figure 2)
    
 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
 Rscript scripts/run_hu_vs_hsv_glm.R \
