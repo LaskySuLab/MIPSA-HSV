@@ -91,7 +91,7 @@ plot_counts <- function(df_long, title_txt, subtitle_txt, outfile) {
     ) +
     scale_fill_manual(values = c("Prevalent" = "#1f78b4", "Incident" = "#F8766D")) +
     theme(
-      axis.text.x = element_text(angle = 60, hjust = 1),
+      axis.text.x = element_text(angle = 60, hjust = 1, size = 10),
       axis.text   = element_text(size = 13),
       axis.title  = element_text(size = 16, face = "bold"),
       plot.title  = element_text(size = 18, face = "bold"),
