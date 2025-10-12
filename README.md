@@ -48,25 +48,24 @@ Rscript scripts/build_binary_matrices.R \
   --min_prev_pct 1
 
 
-4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
+4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/run_hu_vs_hsv_glm.R \
-  --phe data/MIPSA_Asthma_1290.csv \
-  --vi_bin results/virus_proteins_binary.txt \
-  --hu_bin results/human_fl_binary.txt \
-  --vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --rep_sig data/rep_hsv.sig \
-  --aa 1 --bb 2258 \
-  --out_dir results/Res_hu_vs_vi/
-   
-5) Collect + annotate + FDR + replication flag
-Rscript scripts/collect_annotate_results.R \
-  --res_dir results/Res_hu_vs_vi/ \
-  --vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --rep_sig data/rep_hsv.sig \
-  --out_prefix results/qtl_hu_vs_vi
+--llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
+--llf_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_VirSIGHT/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--llf_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_HuSIGHT_FullLength/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
+--llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
+\
+--abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
+--abc_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_VirSIGHT_Reports_02-25-2025/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--abc_hu_fl /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/ABC_300/Su_IB1021_updated_02-25-2025/Su_IB1021_HuSIGHT_FullLength_Reports_02-25-2025/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
+--abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
+\
+--out_dir results/hsv_qtl \
+--n_cores 12
 
-6) Manhattan, Diamond, and Circos plots (Figure 3)
+5) Manhattan, Diamond, and Circos plots (Figure 3)
 Rscript scripts/plots_qtl_panels.R \
   --cohort MGBB-LLF \
   --annot-rds results/annot/MGBB-LLF_glm_annotated.rds \
