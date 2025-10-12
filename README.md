@@ -31,10 +31,22 @@ Rscript scripts/human_seroprev_ridgeline.R \
   --out_dir results/Figure2
    
 3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
+LLF cohort
 Rscript scripts/build_binary_matrices.R \
-  --vi_csv data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --out_dir results/
+  --cohort MGBB-LLF \
+  --virsight_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --husight_fl      /data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --out_dir results/binaries \
+  --min_prev_pct 1
+
+ABC cohort
+Rscript scripts/build_binary_matrices.R \
+  --cohort MGBB-ABC \
+  --virsight_promax /data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --husight_fl      /data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --out_dir results/binaries \
+  --min_prev_pct 1
+
 
 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
 Rscript scripts/run_hu_vs_hsv_glm.R \
