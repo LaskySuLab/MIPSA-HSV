@@ -14,27 +14,27 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 ## Repro order (discovery → replication → prediction → disease association)
 1) Statistics for diseases in the cohorts (Figure 1)
 Rscript scripts/disease_counts.R \
-  --llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
-  --abc_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/Ab_pheno.csv \
+  --llf_phe /data/MIPSA_Asthma_1290.csv \
+  --abc_phe /data/Ab_pheno.csv \
   --out_dir results/Figure1/
 
-2) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
+2) Statistics for VirSIGHT and HuSIGHT (Figure 2)
+Rscript scripts/virus_seroprev_plots.R \
+  --llf_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_varscore /data/IB1007_VirSIGHT_VARscores.csv \
+  --abc_promax /data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_varscore /data/IB1021_VirSIGHT_VARscores.csv \
+  --out_dir results/Figure2 
+Rscript scripts/human_seroprev_ridgeline.R \
+  --llf_hu_fl /data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl /data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --out_dir results/Figure2
+   
+3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 Rscript scripts/build_binary_matrices.R \
   --vi_csv data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --hu_csv data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/
-
-3) Statistics for VirSIGHT and HuSIGHT (Figure 2)
-Rscript scripts/virus_seroprev_plots.R \
-  --llf_promax /proj/regeps/.../IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --llf_varscore /proj/regeps/.../IB1007_VirSIGHT_VARscores.csv \
-  --abc_promax /proj/regeps/.../IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --abc_varscore /proj/regeps/.../IB1021_VirSIGHT_VARscores.csv \
-  --out_dir results/Figure2 
-Rscript scripts/human_seroprev_ridgeline.R \
-  --llf_hu_fl /proj/regeps/.../IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --abc_hu_fl /proj/regeps/.../IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --out_dir results/Figure2
 
 4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates), chunkable
 Rscript scripts/run_hu_vs_hsv_glm.R \
