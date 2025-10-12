@@ -12,13 +12,13 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 - **Replication cohort**: matching ID space for strict peptide–autoantigen ID matches.
 
 ## Repro order (discovery → replication → prediction → disease association)
-1) Statistics for diseases in the cohorts (Figure 1)
+### Statistics for diseases in the cohorts (Figure 1)
 Rscript scripts/disease_counts.R \
   --llf_phe /data/MIPSA_Asthma_1290.csv \
   --abc_phe /data/Ab_pheno.csv \
   --out_dir results/Figure1/
 
-2) Statistics for VirSIGHT and HuSIGHT (Figure 2)
+### Statistics for VirSIGHT and HuSIGHT (Figure 2)
 Rscript scripts/virus_seroprev_plots.R \
   --llf_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_varscore /data/IB1007_VirSIGHT_VARscores.csv \
@@ -30,8 +30,8 @@ Rscript scripts/human_seroprev_ridgeline.R \
   --abc_hu_fl /data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/Figure2
    
-3) Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
--LLF cohort
+### Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
+1) LLF cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
   --virsight_promax /data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -39,7 +39,7 @@ Rscript scripts/build_binary_matrices.R \
   --out_dir results/binaries \
   --min_prev_pct 1
 
--ABC cohort
+2) ABC cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-ABC \
   --virsight_promax /data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -48,7 +48,7 @@ Rscript scripts/build_binary_matrices.R \
   --min_prev_pct 1
 
 
-4) Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
+### Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/run_hu_vs_hsv_glm.R \
   --llf_phe /proj/regeps/regep00/studies/Multi_Omics_Aging/data/cohort_cleaned/MIPSA_Asthma_1290.csv \
   --llf_vi_promax /proj/regeps/regep00/studies/Multi_Omics_Aging/data/antibody_profiling/MIPSA/Asthma_1290/Su_IB1007_VirSIGHT/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -65,7 +65,7 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
 --out_dir results/hsv_qtl \
 --n_cores 12
 
-5) Manhattan, Diamond, and Circos plots (Figure 3)
+### Manhattan, Diamond, and Circos plots (Figure 3)
 Rscript scripts/plots_qtl_panels.R \
   --cohort MGBB-LLF \
   --annot-rds results/annot/MGBB-LLF_glm_annotated.rds \
@@ -86,7 +86,7 @@ Rscript scripts/run_disease_glm.R \
   --dx_inc data/dx_incidence_sums \
   --out_dir results/Res_disease/
 
-8) Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
+### Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/figure4_lasso_prediction.R \
   --train_vi results/virus_proteins_binary.txt \
   --train_hu results/human_fl_binary.txt \
@@ -98,7 +98,7 @@ Rscript scripts/figure4_lasso_prediction.R \
   --species_map "Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV" \
   --out_dir results/Figure4/
 
-9) Network plots (Figure 5)
+### Network plots (Figure 5)
 Rscript scripts/network_plots.R \
   --human_dx results/rep_bin_fchange_FL_dx_com_glm_ann.txt \
   --proid_dx results/rep_bin_fchange_HSV_dx_com_glm_ann.txt \
