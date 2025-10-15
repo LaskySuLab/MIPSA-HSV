@@ -87,15 +87,17 @@ Rscript scripts/plots_pairwise_panels.R \
 
 ### Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/figure4_lasso_prediction.R \
-  --train_vi results/binaries/MGBB-LLF_hsv_binary.tsv \
-  --train_hu results/binaries/MGBB-LLF_human_fl_binary.tsv \
-  --train_vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --test_vi results/binaries/MGBB-ABC_hsv_binary.tsv \
-  --test_hu results/binaries/MGBB-ABC_human_fl_binary.tsv \
-  --ab_list PHLDA1:h6808,ZNF550:h14835,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
-  --species_map "Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV" \
-  --out_dir results/Figure4/
+--train_vi results/binaries/MGBB-LLF_hsv_binary.tsv \
+--train_hu results/binaries/MGBB-LLF_human_fl_binary.tsv \
+--train_vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--test_vi_anno data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--test_hu_anno data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--test_vi results/binaries/MGBB-ABC_hsv_binary.tsv \
+--test_hu results/binaries/MGBB-ABC_human_fl_binary.tsv \
+--rep_hsv results/hsv_qtl/rep_hsv.sig \
+--ab_list PHLDA1:h6808,ZNF550:h6329,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
+--out_dir results/Figure4/
 
 ### Disease GLMs (combined prevalent + incident)
 Rscript scripts/run_disease_glm.R \
