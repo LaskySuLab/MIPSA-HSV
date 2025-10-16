@@ -2,30 +2,14 @@
 # Figure 3 panels: Manhattan (LLF/ABC), Diamond (LLF/ABC), Circos (LLF/ABC)
 # Inputs expected from earlier steps (run_hu_vs_hsv_glm.R, build_binary_matrices.R)
 #
-# Outputs (default to results/Figure3):
-#   figure3A_manhattan_llf.png
-#   figure3B_manhattan_abc.png
-#   figure3C_diamond_llf.png
-#   figure3D_circos_llf.png
-#   figure3E_diamond_abc.png
-#   figure3F_circos_abc.png
-#
 # Notes:
 # - Species names are normalized (HSV-1/2, VZV, CMV, HHV-6A/B, HHV-7, EBV, HHV-8)
 # - Diamond plots use replicated set (LLF sig replicated in ABC)
 # - Circos uses replicated summary + prevalence labels on sectors
 
 suppressPackageStartupMessages({
-  library(optparse)
-  library(data.table)
-  library(dplyr)
-  library(tidyr)
-  library(forcats)
-  library(ggplot2)
-  library(ggrepel)
-  library(viridis)
-  library(circlize)
-  library(ComplexHeatmap)
+  library(optparse); library(data.table); library(dplyr); library(tidyr); library(forcats);
+  library(ggplot2); library(ggrepel); library(viridis); library(circlize); library(ComplexHeatmap);
   library(grid)
 })
 
