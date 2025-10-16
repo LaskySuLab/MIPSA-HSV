@@ -40,6 +40,7 @@ test_hu_anno <- fread(opt$test_hu_anno)
 test_vi_anno <- fread(opt$test_vi_anno)
 
 if (!"var_id" %in% names(train_hu_anno)) train_hu_anno[, var_id := paste0("h", seq_len(.N))]
+train_vi_anno$taxon_species <- species_label_map(train_vi_anno$taxon_species)
 
 bin_from_fob <- function(x) as.integer(!is.na(as.numeric(x)) & as.numeric(x) > 1)
 test_vi_anno$taxon_species <- species_label_map(test_vi_anno$taxon_species)
@@ -165,7 +166,7 @@ for (ii in c(1:9)) {
   
   print(p)
   
-  ggsave(file.path(opt$out_dir, paste0("auc_by_",virus_name,".png")), plot = p, width = 7, height = 5, dpi = 300)
+  ggsave(file.path(opt$out_dir, paste0("auc_by_",virus_name,".png")), plot = p, width = 9, height = 7, dpi = 300)
 }
 
 # Correlation among key Abs (train set)
@@ -176,7 +177,7 @@ if (length(keep_abs) >= 2) {
   rownames(cor_mat) <- colnames(cor_mat)
   ragg::agg_png(
     file.path(opt$out_dir, "figure4F_abs_correlation.png"),
-    width = 1200, height = 1200, res = 300
+    width = 1800, height = 1800, res = 300
   )
   corrplot(cor_mat, method="color", type="upper", tl.cex=1.0, tl.col="black", tl.srt=45, addCoef.col="black")
   dev.off()
@@ -259,7 +260,7 @@ run_lasso_feature_analysis <- function(
   
   # 4) LASSO fit
   set.seed(123)
-  cv_fit <- cv.glmnet(X_train, y_train, family = "binomial", alpha = 1, nfolds = 5, type.measure = "auc")
+  cv_fit <- cv.glmnet(X_train, y_train, family = "binomial", alpha = 1, nfolds = 5)
   best_lambda <- cv_fit$lambda.min
   
   # non-zero features at lambda.min
