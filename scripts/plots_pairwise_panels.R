@@ -61,23 +61,6 @@ opt_list <- list(
 opt <- parse_args(OptionParser(option_list = opt_list))
 dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
 
-# ------------------------- helpers -------------------------
-species_label_map <- function(x) {
-  x <- gsub('Human alphaherpesvirus 1', 'HSV-1', x)
-  x <- gsub('Human alphaherpesvirus 2', 'HSV-2', x)
-  x <- gsub('Human alphaherpesvirus 3', 'VZV', x)
-  x <- gsub('Human betaherpesvirus 5', 'CMV', x)
-  x <- gsub('Human betaherpesvirus 6A', 'HHV-6A', x)
-  x <- gsub('Human betaherpesvirus 6B', 'HHV-6B', x)
-  x <- gsub('Human betaherpesvirus 7', 'HHV-7', x)
-  x <- gsub('Human gammaherpesvirus 4', 'EBV', x)
-  x <- gsub('Human gammaherpesvirus 8', 'HHV-8', x)
-  x
-}
-species_levels <- c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B","HHV-7","EBV","HHV-8")
-
-cap_vals <- function(x, cap) pmin(x, cap)
-
 # collapse (antibody x product) to min P for Manhattan
 collapse_minP <- function(dt) {
   dt %>%
@@ -166,7 +149,7 @@ plot_diamond <- function(dd, title_txt, outfile, cap_size = 100, cap_color = 80,
 # Manhattan (facet by species, color by Beta, shape by direction)
 plot_manhattan <- function(dt_collapse, title_txt, cutoff_p = NULL, lab_thresh, outfile = "manhattan.png") {
   dt_collapse$taxon_species <- species_label_map(dt_collapse$taxon_species)
-  dt_collapse$taxon_species <- factor(dt_collapse$taxon_species, levels = species_levels)
+  dt_collapse$taxon_species <- factor(dt_collapse$taxon_species, levels = species_list)
   
   dt_collapse$direction_of_effect <- ifelse(dt_collapse$Beta > 0, "positive", "negative")
   
