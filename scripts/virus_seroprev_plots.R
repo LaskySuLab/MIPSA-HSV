@@ -3,7 +3,8 @@
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(tidyr);
   library(forcats); library(ggplot2); library(ggridges); library(viridis)
-  
+  source("R/utils_common.R")
+  source("R/utils_utils.R")
 })
 
 # ---------- CLI ----------
