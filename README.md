@@ -87,33 +87,63 @@ Rscript scripts/plots_pairwise_panels.R \
 
 ### Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/figure4_lasso_prediction.R \
---train_vi results/binaries/MGBB-LLF_hsv_binary.tsv \
---train_hu results/binaries/MGBB-LLF_human_fl_binary.tsv \
---train_vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---test_vi_anno data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---test_hu_anno data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---test_vi results/binaries/MGBB-ABC_hsv_binary.tsv \
---test_hu results/binaries/MGBB-ABC_human_fl_binary.tsv \
---rep_hsv results/hsv_qtl/rep_hsv.sig \
---ab_list PHLDA1:h6808,ZNF550:h6329,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
---out_dir results/Figure4/
+  --train_vi results/binaries/MGBB-LLF_hsv_binary.tsv \
+  --train_hu results/binaries/MGBB-LLF_human_fl_binary.tsv \
+  --train_vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --test_vi_anno data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --test_hu_anno data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --test_vi results/binaries/MGBB-ABC_hsv_binary.tsv \
+  --test_hu results/binaries/MGBB-ABC_human_fl_binary.tsv \
+  --rep_hsv results/hsv_qtl/rep_hsv.sig \
+  --ab_list PHLDA1:h6808,ZNF550:h6329,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
+  --out_dir results/Figure4/
 
 ### Disease GLMs (combined prevalent + incident)
-Rscript scripts/run_disease_glm.R \
-  --phe data/MIPSA_Asthma_1290.csv \
+Rscript scripts/run_disease_glm.R
+  --pheno data/MIPSA_Asthma_1290.csv \
+  --vi_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --hu_fl data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
   --hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
+  --rep_llf results/hsv_qtl/rep_hsv.sig \
   --dx_count data/Figure1/llf_cas_counts_filtered.csv \
-  --out_dir results/Res_disease/
+  --out_dir results/Res_disease
+  
 
 ### Network plots (Figure 5)
-Rscript scripts/network_plots.R \
-  --human_dx results/rep_bin_fchange_FL_dx_com_glm_ann.txt \
-  --proid_dx results/rep_bin_fchange_HSV_dx_com_glm_ann.txt \
-  --rep_sig data/rep_hsv.sig \
-  --virus "Human alphaherpesvirus 1" \
-  --out_png results/network_plot_HSV1.png
+Rscript scripts/network_plots.R
+  --human_dx results/Res_disease/rep_bin_fchange_FL_dx_com_glm_ann.tsv
+  --proid_dx results/Res_disease/rep_bin_fchange_HSV_dx_com_glm_ann.tsv
+  --rep_sig results/hsv_qtl/rep_hsv.sig
+  --virus "Human alphaherpesvirus 1"
+  --seednum 123
+  --out_png results/Figure5/network_plot_HSV1.png
+
+Rscript scripts/network_plots.R
+  --human_dx results/Res_disease/rep_bin_fchange_FL_dx_com_glm_ann.tsv
+  --proid_dx results/Res_disease/rep_bin_fchange_HSV_dx_com_glm_ann.tsv
+  --rep_sig results/hsv_qtl/rep_hsv.sig
+  --virus "Human alphaherpesvirus 2"
+  --seednum 123
+  --out_png results/network_plot_HSV2.png
+
+Rscript scripts/network_plots.R
+  --human_dx results/Res_disease/rep_bin_fchange_FL_dx_com_glm_ann.tsv
+  --proid_dx results/Res_disease/rep_bin_fchange_HSV_dx_com_glm_ann.tsv
+  --rep_sig results/hsv_qtl/rep_hsv.sig
+  --virus "Human betaherpesvirus 5"
+  --seednum 201
+  --out_png results/network_plot_CMV.png
+
+Rscript scripts/network_plots.R
+  --human_dx results/Res_disease/rep_bin_fchange_FL_dx_com_glm_ann.tsv
+  --proid_dx results/Res_disease/rep_bin_fchange_HSV_dx_com_glm_ann.tsv
+  --rep_sig results/hsv_qtl/rep_hsv.sig
+  --virus "Human gammaherpesvirus 4"
+  --seednum 99
+  --out_png results/network_plot_EBV.png
+
    
 ## Software
 R ≥ 4.2 with: `data.table`, `dplyr`, `tidyr`, `ggplot2`, `ggrepel`, `glmnet`, `pROC`, `igraph`, `ggraph`, `scales`, `argparse`, `readr`, `stringr`.
