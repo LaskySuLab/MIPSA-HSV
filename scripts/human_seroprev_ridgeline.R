@@ -1,14 +1,10 @@
 #!/usr/bin/env Rscript
 
 suppressPackageStartupMessages({
-  library(optparse)
-  library(data.table)
-  library(dplyr)
-  library(tidyr)
-  library(forcats)
-  library(ggplot2)
-  library(ggridges)
-  library(viridis)
+  library(optparse); library(data.table); library(dplyr); ibrary(tidyr);
+  library(forcats); library(ggplot2); library(ggridges); library(viridis)
+  source(utils_common.R)
+  source(utils_qtl.R)
 })
 
 # ---------- CLI ----------
@@ -27,19 +23,6 @@ dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
 
 use_theme_ipsum <- requireNamespace("hrbrthemes", quietly = TRUE)
 if (use_theme_ipsum) library(hrbrthemes)
-
-species_label_map <- function(x) {
-  x <- gsub('Human alphaherpesvirus 1', 'HSV-1', x)
-  x <- gsub('Human alphaherpesvirus 2', 'HSV-2', x)
-  x <- gsub('Human alphaherpesvirus 3', 'VZV', x)
-  x <- gsub('Human betaherpesvirus 5', 'CMV', x)
-  x <- gsub('Human betaherpesvirus 6A', 'HHV-6A', x)
-  x <- gsub('Human betaherpesvirus 6B', 'HHV-6B', x)
-  x <- gsub('Human betaherpesvirus 7', 'HHV-7', x)
-  x <- gsub('Human gammaherpesvirus 4', 'EBV', x)
-  x <- gsub('Human gammaherpesvirus 8', 'HHV-8', x)
-  x
-}
 
 # ---------- helper to compute peptide seroprev + plot ----------
 make_ridge <- function(promax_df, varscore_df, cohort, outfile_png, min_prev = 1) {
