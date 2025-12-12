@@ -26,39 +26,39 @@ Rscript scripts/virus_seroprev_plots.R \
   --abc_varscore Data/IB1021_VirSIGHT_VARscores.csv \
   --out_dir results/Figure2 
 Rscript scripts/human_seroprev_ridgeline.R \
-  --llf_hu_fl data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --abc_hu_fl data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/Figure2
    
 ### Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 1) LLF cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
-  --virsight_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --husight_fl      data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --virsight_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --husight_fl      Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/binaries \
   --min_prev_pct 1
 
 2) ABC cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-ABC \
-  --virsight_promax data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --husight_fl      data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --virsight_promax Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --husight_fl      Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --out_dir results/binaries \
   --min_prev_pct 1
 
 
 ### Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/run_hu_vs_hsv_glm.R \
-  --llf_phe data/MIPSA_Asthma_1290.csv \
-  --llf_vi_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --llf_hu_fl data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --llf_phe Data/MIPSA_Asthma_1290.csv \
+  --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
   --llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
 \
-  --abc_phe data/Ab_pheno.csv \
-  --abc_vi_promax data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --abc_hu_fl data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_phe Data/Ab_pheno.csv \
+  --abc_vi_promax Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
   --abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
 \
@@ -69,15 +69,15 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
 Rscript scripts/plots_pairwise_panels.R \
   --llf_all results/hsv_qtl/llf_hsv_bin_glm_all.tsv \
   --llf_sig results/hsv_qtl/llf_hsv_bin_glm_sig.tsv \
-  --llf_vi_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --llf_hu_fl     data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_hu_fl     Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
   --llf_hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
   \
   --abc_all results/hsv_qtl/abc_hsv_bin_glm_all.tsv \
   --abc_sig results/hsv_qtl/abc_hsv_bin_glm_sig.tsv \
-  --abc_vi_promax data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --abc_hu_fl     data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --abc_vi_promax Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_hu_fl     Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --abc_vi_bin results/binaries/MGBB-ABC_hsv_binary.tsv \
   --abc_hu_bin results/binaries/MGBB-ABC_human_fl_binary.tsv \
   \
@@ -89,10 +89,10 @@ Rscript scripts/plots_pairwise_panels.R \
 Rscript scripts/figure4_lasso_prediction.R \
   --train_vi results/binaries/MGBB-LLF_hsv_binary.tsv \
   --train_hu results/binaries/MGBB-LLF_human_fl_binary.tsv \
-  --train_vi_anno data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --train_hu_anno data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --test_vi_anno data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --test_hu_anno data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --train_vi_anno Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --train_hu_anno Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --test_vi_anno Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --test_hu_anno Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --test_vi results/binaries/MGBB-ABC_hsv_binary.tsv \
   --test_hu results/binaries/MGBB-ABC_human_fl_binary.tsv \
   --rep_hsv results/hsv_qtl/rep_hsv.sig \
@@ -101,13 +101,13 @@ Rscript scripts/figure4_lasso_prediction.R \
 
 ### Disease GLMs (combined prevalent + incident)
 Rscript scripts/run_disease_glm.R
-  --pheno data/MIPSA_Asthma_1290.csv \
-  --vi_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --hu_fl data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+  --pheno Data/MIPSA_Asthma_1290.csv \
+  --vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --vi_bin results/binaries/MGBB-LLF_hsv_binary.tsv \
   --hu_bin results/binaries/MGBB-LLF_human_fl_binary.tsv \
   --rep_llf results/hsv_qtl/rep_hsv.sig \
-  --dx_count data/Figure1/llf_cas_counts_filtered.csv \
+  --dx_count results/llf_cas_counts_filtered.csv \
   --out_dir results/Res_disease
   
 
