@@ -20,10 +20,10 @@ Rscript scripts/disease_counts.R \
 
 ### Statistics for VirSIGHT and HuSIGHT (Figure 2)
 Rscript scripts/virus_seroprev_plots.R \
-  --llf_promax data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --llf_varscore data/IB1007_VirSIGHT_VARscores.csv \
-  --abc_promax data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
-  --abc_varscore data/IB1021_VirSIGHT_VARscores.csv \
+  --llf_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --llf_varscore Data/IB1007_VirSIGHT_VARscores.csv \
+  --abc_promax Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+  --abc_varscore Data/IB1021_VirSIGHT_VARscores.csv \
   --out_dir results/Figure2 
 Rscript scripts/human_seroprev_ridgeline.R \
   --llf_hu_fl data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
