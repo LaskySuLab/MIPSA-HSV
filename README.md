@@ -14,8 +14,8 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 ## Repro order (discovery → replication → prediction → disease association)
 ### Statistics for diseases in the cohorts (Figure 1)
 Rscript scripts/disease_counts.R \
-  --llf_phe data/MIPSA_Asthma_1290.csv \
-  --abc_phe data/Ab_pheno.csv \
+  --llf_phe Data/llf_1290_phe.tsv \
+  --abc_phe Data/abc_300_phe.tsv \
   --out_dir results/Figure1/
 
 ### Statistics for VirSIGHT and HuSIGHT (Figure 2)
