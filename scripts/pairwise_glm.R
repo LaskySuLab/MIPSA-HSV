@@ -10,27 +10,23 @@ suppressPackageStartupMessages({
 opt_list <- list(
   # LLF inputs
   make_option("--llf_phe", type="character",
-              help="LLF phenotype TSV (e.g., llf_1290_phe.tsv)"),
+              help="llf_1290_phe.tsv"),
   make_option("--llf_vi_promax", type="character",
-              help="LLF VirSIGHT Promax TSV for annotation"),
+              help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
   make_option("--llf_hu_fl", type="character",
-              help="LLF HuSIGHT FullLength TSV for annotation (h1..hN)"),
+              help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
   make_option("--llf_vi_bin", type="character",
-              help="LLF HSV binary TSV (from build_binary_matrices.R)"),
+              help="hsv_promax_bin_MGBB-LLF.tsv"),
   make_option("--llf_hu_bin", type="character",
-              help="LLF human FL binary TSV (from build_binary_matrices.R)"),
+              help="human_fl_bin_MGBB-LLF.tsv"),
   
   # LEC inputs
   make_option("--lec_phe", type="character",
-              help="LEC phenotype TSV (e.g., lec_300_phe.tsv)"),
-  make_option("--lec_vi_promax", type="character",
-              help="LEC VirSIGHT Promax TSV for annotation"),
-  make_option("--lec_hu_fl", type="character",
-              help="LEC HuSIGHT FullLength TSV for annotation (h1..hN)"),
+              help="lec_763_phe.tsv"),
   make_option("--lec_vi_bin", type="character",
-              help="LEC HSV binary TSV (from build_binary_matrices.R)"),
+              help="hsv_promax_bin_MGBB-LEC.tsv"),
   make_option("--lec_hu_bin", type="character",
-              help="LEC human FL binary TSV (from build_binary_matrices.R)"),
+              help="human_fl_bin_MGBB-LEC.tsv"),
   
   # General
   make_option("--out_dir", type="character", default="results/Run",
