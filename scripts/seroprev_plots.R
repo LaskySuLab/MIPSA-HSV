@@ -17,17 +17,16 @@ suppressPackageStartupMessages({
 # ---------- CLI ----------
 opt_list <- list(
   make_option("--llf_promax", type="character", help="LLF VirSIGHT Promax CSV"),
-  make_option("--llf_varscore", type="character", help="LLF VirSIGHT VARscores CSV"),
+  make_option("--llf_fl", type="character", help="LLF HuSIGHT FullLength CSV"),
   make_option("--abc_promax", type="character", help="ABC VirSIGHT Promax CSV"),
-  make_option("--abc_varscore", type="character", help="ABC VirSIGHT VARscores CSV"),
+  make_option("--abc_fl", type="character", help="ABC HuSIGHT FullLength CSV"),
   make_option("--leo_promax", type="character", help="LEO VirSIGHT Promax CSV"),
-  make_option("--leo_varscore", type="character", help="LEO VirSIGHT VARscores CSV"),
+  make_option("--leo_fl", type="character", help="LEO HuSIGHT FullLengthCSV"),
   make_option("--out_dir", type="character", default="results/Figure2",
               help="Output directory [default %default]"),
   make_option("--min_pep_prev", type="double", default=1,
               help="Minimum peptide prevalence (%) to show in ridgeline [default %default]")
 )
-
 opt <- parse_args(OptionParser(option_list = opt_list))
 dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
 
