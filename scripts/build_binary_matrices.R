@@ -9,9 +9,14 @@ suppressPackageStartupMessages({
 
 # ---------- Command-line arguments ----------
 option_list <- list(
-  make_option("--cohort", type="character", help="Cohort name: MGBB-LLF or MGBB-LEC"),
-  make_option("--virsight_promax", type="character", help="VirSIGHT Promax Hits"),
-  make_option("--husight_fl", type="character", help="HuSIGHT Full-Length Hits"),
+  make_option("--virsight_promax.llf", type="character", help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--husight_fl.llf", type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--virsight_promax.abc", type="character", help="IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--husight_fl.abc", type="character", help="IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--virsight_promax.leo", type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
+  make_option("--husight_fl.leo", type="character", help="IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
+  make_option("--pheno.llf", type="character", help="llf_1290_phe.tsv"),
+  make_option("--pheno.lec", type="character", help="lec_763_phe.tsv"),
   make_option("--out_dir", type="character", default="./Data",
               help="Output directory [default %default]")
 )
