@@ -318,3 +318,5 @@ res_wide$p.adj_llf = p.adjust(res_wide$P_llf, method='fdr')
 fwrite(res_wide,
        file.path(opt$out_dir, "rep_hu_dx_all_inc_coxphf_ann.tsv"),
        sep = "\t", quote = FALSE)
+
+message("Done. Outputs in: ", opt$out_dir)  
