@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr);
   library(tidyr); library(ggplot2); library(stringr)
