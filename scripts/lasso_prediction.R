@@ -2,27 +2,23 @@
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(glmnet)
   library(pROC); library(ggplot2); library(ggrepel); library(scales)
-  library(corrplot); library(purrr); library(stringr); library(tidyr)
+  library(corrplot); library(purrr); library(stringr); library(tidyr);library(foreach);library(doParallel)
   source("R/utils_common.R")
-  source("R/utils_utils.R")
+  source("R/utils_qtl.R")
 })
 
 # ----------------------------- CLI -----------------------------
 option_list <- list(
-  make_option("--train_vi", type="character", help="MGBB LLF virus_proteins_binary.tsv"),
-  make_option("--train_hu", type="character", help="MGBB LLF human_fl_binary.tsv"),
+  make_option("--train_vi", type="character", help="MGBB LLF virus_bin.tsv"),
+  make_option("--train_hu", type="character", help="MGBB LLF human_fl_bin.tsv"),
   make_option("--train_vi_anno", type="character", help="LLF VirSIGHT Promax FoB CSV"),
   make_option("--train_hu_anno", type="character", help="LLF HuSIGHT FullLength FoB CSV"),
-  make_option("--test_vi", type="character", help="ABC virus binary matrix"),
-  make_option("--test_hu", type="character", help="ABC human binary matrix"),
+  make_option("--test_vi", type="character", help="LEC virus bin.tsv"),
+  make_option("--test_hu", type="character", help="LEC human bin.tsv"),
   # Figure 4 focus set (specific antibodies to showcase ROC, coefs, corr)
-  make_option("--ab_list", type="character",
-              help="Comma sep gene:hid pairs, e.g. 'PHLDA1:h6808,ZNF550:h6329,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250'"),
   make_option("--species_map", type="character",
               help="Semicolon sep 'Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV'"),
-  make_option("--out_dir", type="character", default="results/Figure4", help="Output dir"),
-  make_option("--make_combined_panel", action="store_true", default=FALSE,
-              help="If set, combine 9 HSV barplots into a 3x3 panel PNG")
+  make_option("--out_dir", type="character", default="results/Figure4", help="Output dir")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings=FALSE, recursive=TRUE)
@@ -36,40 +32,15 @@ rep_hsv <- fread(opt$rep_hsv)
 train_hu_anno <- fread(opt$train_hu_anno)
 train_vi_anno <- fread(opt$train_vi_anno)
 
-test_hu_anno <- fread(opt$test_hu_anno)
-test_vi_anno <- fread(opt$test_vi_anno)
-
 if (!"var_id" %in% names(train_hu_anno)) train_hu_anno[, var_id := paste0("h", seq_len(.N))]
 train_vi_anno$taxon_species <- species_label_map(train_vi_anno$taxon_species)
 
-bin_from_fob <- function(x) as.integer(!is.na(as.numeric(x)) & as.numeric(x) > 1)
-test_vi_anno$taxon_species <- species_label_map(test_vi_anno$taxon_species)
-test_vi_anno1 <- test_vi_anno[taxon_species %in% species_list]
-
-sample_cols_vi <- grep('^10', names(test_vi_anno1), value = TRUE)
-virus_peptide <- grep('Sample_ID', names(train_vi), invert = TRUE, value = TRUE)
-
-test_vi_anno2 <- as.data.frame(test_vi_anno1[, ..sample_cols_vi])
-test_vi_anno2[] <- lapply(test_vi_anno2, bin_from_fob)
-test_vi_anno2 <- as.data.frame(t(test_vi_anno2))
-colnames(test_vi_anno2) <- test_vi_anno1$UniProt_acc
-rownames(test_vi_anno2) <- NULL
-test_vi = test_vi_anno2[,virus_peptide]
-test_vi$Sample_ID = sample_cols_vi
-test_hu$Sample_ID = as.character(test_hu$Sample_ID)
-
 # ------------------ Focus antibodies (Figure 4 core) -----------
-ab_pairs <- str_split(opt$ab_list, ",")[[1]]
-ab_tbl   <- tibble::tibble(
-  gene = sub(":.*$", "", ab_pairs),
-  hid  = paste0(sub("^.*:", "", ab_pairs))
-)
-
 rep_ab_tbl = unique(rep_hsv[,c('antibody','gene_symbol')])
 
 # Shared-subject join
-merge_train <- train_hu %>% right_join(train_vi, by="Sample_ID") %>% as.data.table()
-merge_test  <- test_hu  %>% right_join(test_vi,  by="Sample_ID") %>% as.data.table()
+merge_train <- train_hu %>% right_join(train_vi, by="Subject_Id") %>% as.data.table()
+merge_test  <- test_hu  %>% right_join(test_vi,  by="Sample_Id") %>% as.data.table()
 
 # virus species sets per short label
 species_sets <- lapply(species_list, function(sp) {
@@ -78,81 +49,286 @@ species_sets <- lapply(species_list, function(sp) {
   tibble::tibble(species = sp, acc = list(acc))
 }) %>% bind_rows()
 
-fit_lasso_eval <- function(species_acc, ab_id, df_train, df_test, out_prefix) {
-  acc <- species_acc
-  if (length(acc) == 0) return(NULL)
-  if (!(ab_id %in% colnames(df_train)) || !(ab_id %in% colnames(df_test))) return(NULL)
+# 1. Setup Parallel Backend
+# Leave one core free for OS responsiveness
+num_cores <- parallel::detectCores() - 1 
+registerDoParallel(cores = num_cores)
 
-  train_x <- model.matrix(~ ., df_train[, ..acc])
-  train_y <- df_train[[ab_id]]
-  test_x  <- model.matrix(~ ., df_test[,  ..acc])
-  test_y  <- df_test[[ab_id]]
-  
-  set.seed(123)
-  cv_fit   <- cv.glmnet(train_x, train_y, family="binomial", alpha=1)
-  pred_prob<- as.numeric(predict(cv_fit, newx=test_x, s=cv_fit$lambda.min, type="response"))
-  
-  roc_obj <- tryCatch(roc(test_y, pred_prob, quiet = TRUE), error=function(e) NULL)
-  if (is.null(roc_obj)) return(NULL)
-  
-  auc_val <- as.numeric(auc(roc_obj))
-  roc_df  <- coords(roc_obj, x="all", ret=c("specificity","sensitivity")) %>%
-    as.data.frame() %>% mutate(FPR = 1 - specificity, TPR = sensitivity)
-  
-  list(roc = roc_df, auc = auc_val, lambda = cv_fit$lambda.min, cv = cv_fit)
-}
+print(paste("Running on", num_cores, "cores"))
 
-# ----------------------- Figure 4: ROC etc. --------------------
-roc_all <- list(); auc_tab <- list()
-
-for (i in seq_len(nrow(species_sets))) {
+# 2. Run Parallel Loop over Species (Outer Loop)
+# We parallelize the outer loop so each core handles one species and its matrix generation
+results_list.lec <- foreach(i = seq_len(nrow(species_sets))) %dopar% {
+  
   sp  <- species_sets$species[i]
   acc <- species_sets$acc[[i]]
+
+  if (length(acc) == 0) return(NULL)
+  
+  # --- OPTIMIZATION A: Pre-compute Matrix ONCE per species ---
+  valid_cols <- intersect(acc, colnames(merge_train))
+  if (length(valid_cols) == 0) return(NULL)
+  
+  # Create matrices (Using -1 to remove intercept if you prefer glmnet to handle it, 
+  # though keeping default is fine if consistent)
+  train_x <- model.matrix(~ ., merge_train[, ..valid_cols])
+  test_x  <- model.matrix(~ ., merge_test[, ..valid_cols])
+  
+  # Local list to store results for this species
+  species_results <- list()
+  
+  # Iterate antibodies (Inner Loop - runs sequentially on each core)
   for (j in seq_len(nrow(rep_ab_tbl))) {
     ab   <- rep_ab_tbl$antibody[j]
     gene <- rep_ab_tbl$gene_symbol[j]
-    res <- fit_lasso_eval(acc, ab, merge_train, merge_test, paste0(sp,"_",ab))
-    if (is.null(res)) next
-    roc_all[[paste0(ab,"_",sp)]] <- res$roc %>% mutate(Antibody=ab, Gene=gene, Virus=sp, AUC=res$auc)
-    auc_tab[[paste0(ab,"_",sp)]] <- data.frame(Antibody=ab, Gene=gene, Virus=sp, AUC=res$auc)
+    
+    # Skip if antibody missing
+    if (!(ab %in% colnames(merge_train)) || !(ab %in% colnames(merge_test))) next
+    
+    train_y <- merge_train[[ab]]
+    test_y  <- merge_test[[ab]]
+    
+    # Skip if target has no variance (all 0s or all 1s)
+    if (length(unique(train_y)) < 2) next
+    
+    # --- OPTIMIZATION B: Faster CV ---
+    set.seed(123)
+    cv_fit <- tryCatch(
+      cv.glmnet(train_x, train_y, family="binomial", alpha=1, nfolds=5),
+      error = function(e) NULL
+    )
+    
+    if (is.null(cv_fit)) next
+    
+    # Prediction
+    pred_prob <- as.numeric(predict(cv_fit, newx=test_x, s="lambda.min", type="response"))
+    
+    # ROC Calculation
+    roc_obj <- tryCatch(roc(test_y, pred_prob, quiet = TRUE), error=function(e) NULL)
+    
+    if (!is.null(roc_obj)) {
+      auc_val <- as.numeric(auc(roc_obj))
+      
+      # We create the summary row immediately to save memory
+      res_row <- data.frame(
+        Antibody = ab,
+        Gene = gene,
+        Virus = sp,
+        AUC = auc_val,
+        Lambda = cv_fit$lambda.min
+      )
+      
+      roc_coords <- coords(roc_obj, x="all", ret=c("specificity","sensitivity")) %>%
+        as.data.frame() %>% 
+        mutate(FPR = 1 - specificity, TPR = sensitivity, Antibody=ab, Virus=sp)
+      
+      species_results[[paste0(ab, "_", sp)]] <- list(summary = res_row, roc = roc_coords)
+    }
   }
+  
+  # Return the list of results for this species
+  return(species_results)
 }
 
-roc_all_df <- bind_rows(roc_all)
-auc_tab_df <- bind_rows(auc_tab)
+# 3. Post-process: Unpack the parallel results
+# Flatten the list of lists
+flat_results.lec <- unlist(results_list.lec, recursive = FALSE)
 
-fwrite(roc_all_df, file.path(opt$out_dir, "roc_summary_ABCtest.csv"))
-fwrite(auc_tab_df, file.path(opt$out_dir, "auc_summary_ABCtest.csv"))
+# Extract DataFrames
+if (!is.null(flat_results.lec)) {
+  auc_tab_df.lec <- bind_rows(lapply(flat_results.lec, `[[`, "summary"))
+  roc_all_df.lec <- bind_rows(lapply(flat_results.lec, `[[`, "roc"))
+}
 
+roc_all_df.lec = left_join(roc_all_df.lec, auc_tab_df.lec, by=c("Antibody", 'Virus'))
 
-roc_all_df$Virus = factor(roc_all_df$Virus, levels = c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B",'HHV-7',"EBV",'HHV-8'))
+auc_tab_df.lec1 <- auc_tab_df.lec %>%  
+  group_by(Gene, Virus) %>%
+  slice_max(order_by = AUC, with_ties = FALSE) %>%
+  ungroup()
+auc_tab_df.lec1 = left_join(auc_tab_df.lec1, train_hu_anno[,c('var_id','UniProt_acc')], by=c('Antibody'='var_id'))
+auc_tab_df.lec1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  auc_tab_df.lec1$Gene)
 
-if (nrow(roc_all_df)) {
-  for (ab in unique(ab_tbl$hid)) {
-    sub  <- roc_all_df %>% filter(Antibody==ab)
+saveRDS(flat_results.lec, file = file.path(opt$out_dir, "lec_test_lasso.rds"))
+fwrite(roc_all_df.lec, file.path(opt$out_dir, "lec_test_roc_summary.csv"))
+fwrite(auc_tab_df.lec1, file.path(opt$out_dir, "lec_test_auc_summary.csv"))
+# flat_results.lec = readRDS(file = file.path(opt$out_dir, "lec_test_lasso.rds"))
+
+ab_tbl = subset(auc_tab_df.lec1[,c('Antibody', 'Gene', 'Virus','AUC')], auc_tab_df.lec1$AUC > 0.85) #17
+fwrite(ab_tbl, file.path(opt$out_dir, "lec_test_auc_summary_sig.csv"))
+
+# ------------------ LLF only ------------------------------------------------
+
+# 1. Parallel Loop over Species in LLF only
+results_list.llf <- foreach(i = seq_len(nrow(species_sets))) %dopar% {
+  
+  sp  <- species_sets$species[i]
+  acc <- species_sets$acc[[i]]
+  print(sp)
+  
+  # Basic checks
+  if (length(acc) == 0) return(NULL)
+  valid_cols <- intersect(acc, colnames(merge_train)) # Assuming 'merge_train' is total data now
+  if (length(valid_cols) == 0) return(NULL)
+  
+  # --- OPTIMIZATION 1: Create ONE Design Matrix for all antibodies of this species ---
+  # We build the matrix on the TOTAL data first
+  full_x <- model.matrix(~ ., merge_train[, ..valid_cols])
+  
+  # --- OPTIMIZATION 2: Perform 80:20 Split ---
+  # Create indices: 80% Train, 20% Test
+  n_samples <- nrow(merge_train)
+  # Set seed based on iteration to ensure reproducible splits in parallel
+  set.seed(123)
+  train_idx <- sample(seq_len(n_samples), size = floor(0.8 * n_samples))
+  
+  # Split the matrix immediately (so we don't do it inside the antibody loop)
+  train_x_mat <- full_x[train_idx, ]
+  test_x_mat  <- full_x[-train_idx, ]
+  
+  species_results <- list()
+  
+  # --- Inner Loop: Iterate Antibodies ---
+  for (j in seq_len(nrow(rep_ab_tbl))) {
+    ab   <- rep_ab_tbl$antibody[j]
+    gene <- rep_ab_tbl$gene_symbol[j]
+
+    # Check if antibody exists
+    if (!(ab %in% colnames(merge_train))) next
+    
+    # Get the response vector (y) for all samples
+    full_y <- merge_train[[ab]]
+    
+    # Split y using the SAME indices as the matrix
+    train_y_vec <- full_y[train_idx]
+    test_y_vec  <- full_y[-train_idx]
+    
+    # --- Safety Checks ---
+    # 1. Skip if training data has no variation (all 0s or all 1s)
+    if (length(unique(train_y_vec)) < 2) next
+    # 2. Skip if test set has no positives (cannot calculate ROC)
+    if (sum(test_y_vec == 1) == 0 || sum(test_y_vec == 0) == 0) next
+    
+    # --- Lasso with Faster CV ---
+    set.seed(123)
+    cv_fit <- tryCatch(
+      cv.glmnet(train_x_mat, train_y_vec, family="binomial", alpha=1, nfolds=5),
+      error = function(e) NULL
+    )
+    
+    if (is.null(cv_fit)) next
+    
+    # Prediction on Test Set
+    pred_prob <- as.numeric(predict(cv_fit, newx=test_x_mat, s="lambda.min", type="response"))
+    
+    # ROC / AUC
+    roc_obj <- tryCatch(roc(test_y_vec, pred_prob, quiet = TRUE), error=function(e) NULL)
+    
+    if (!is.null(roc_obj)) {
+      auc_val <- as.numeric(auc(roc_obj))
+      
+      # Save summary row
+      res_row <- data.frame(
+        Antibody = ab,
+        Gene = gene,
+        Virus = sp,
+        AUC = auc_val,
+        Lambda = cv_fit$lambda.min
+      )
+      
+      # Save ROC coordinates (Optional - remove if file size is too big)
+      roc_coords <- coords(roc_obj, x="all", ret=c("specificity","sensitivity")) %>%
+        as.data.frame() %>% 
+        mutate(FPR = 1 - specificity, TPR = sensitivity, Antibody=ab, Virus=sp)
+      
+      species_results[[paste0(ab, "_", sp)]] <- list(summary = res_row, roc = roc_coords)
+    }
+  }
+  
+  return(species_results)
+}
+
+# 3. Clean up Parallel Backend
+stopImplicitCluster()
+
+# 4. Consolidate Results
+flat_results.llf <- unlist(results_list.llf, recursive = FALSE)
+
+auc_tab_df.llf <- bind_rows(lapply(flat_results.llf, `[[`, "summary"))
+roc_all_df.llf <- bind_rows(lapply(flat_results.llf, `[[`, "roc"))
+
+roc_all_df.llf = left_join(roc_all_df.llf, auc_tab_df.llf, by=c("Antibody", 'Virus'))
+
+auc_tab_df.llf1 <- auc_tab_df.llf %>%  
+  group_by(Gene, Virus) %>%
+  slice_max(order_by = AUC, with_ties = FALSE) %>%
+  ungroup()
+auc_tab_df.llf1 = left_join(auc_tab_df.llf1, train_hu_anno[,c('var_id','UniProt_acc')], by=c('Antibody'='var_id'))
+auc_tab_df.llf1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  auc_tab_df.llf1$Gene)
+
+saveRDS(flat_results.llf, file = file.path(opt$out_dir, "llf_test_lasso.rds"))
+# flat_results.llf = readRDS(file = file.path(opt$out_dir, "llf_test_lasso.rds"))
+
+fwrite(roc_all_df.llf, file.path(opt$out_dir, "llf_test_roc_summary.csv"))
+fwrite(auc_tab_df.llf, file.path(opt$out_dir, "llf_test_auc_summary.csv"))
+
+ab_tbl.llf = subset(auc_tab_df.llf[,c('Antibody', 'Gene', 'Virus','AUC')], auc_tab_df.llf$AUC > 0.80) #35
+fwrite(ab_tbl.llf, file.path(opt$out_dir, "llf_test_auc_summary_sig.csv"))
+
+auc_merge = inner_join(auc_tab_df.lec1, auc_tab_df.llf, by=c('Antibody', 'Gene', 'Virus'))
+
+fwrite(auc_merge, file.path(opt$out_dir, "auc_summary_merge.csv"))
+##################################################################################
+# AUC >0.85 Gene-HSV links
+
+roc_all_df.lec$Virus = factor(roc_all_df.lec$Virus, levels = c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B",'HHV-7',"EBV",'HHV-8'))
+
+if (nrow(roc_all_df.lec)) {
+  for (ab in unique(ab_tbl$Antibody)) {
+    sub  <- roc_all_df.lec %>% filter(Antibody==ab)
     gene <- unique(sub$Gene)
     p <- ggplot(sub, aes(FPR, TPR, color = Virus)) +
       geom_line(size=1) + geom_abline(linetype="dashed") +
-      labs(title = paste0("ROC for ", gene, " (ABC test)  MaxAUC=", sprintf("%.3f", max(sub$AUC))),
+      labs(title = paste0("", gene, " MaxAUC=", sprintf("%.3f", max(sub$AUC))),
            x="False Positive Rate", y="True Positive Rate") +
       theme_minimal(base_size=12)
-    ggsave(file.path(opt$out_dir, paste0("roc_", ab, ".png")), p, width=5.5, height=5, dpi=300)
+    ggsave(file.path(opt$out_dir, paste0("roc_", gene, "_lec.png")), p, width=5.5, height=5, dpi=300, bg = "white")
   }
 }
 
+roc_all_df.llf$Virus = factor(roc_all_df.llf$Virus, levels = c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B",'HHV-7',"EBV",'HHV-8'))
 
+if (nrow(roc_all_df.llf)) {
+  for (ab in unique(ab_tbl$Antibody)) {
+    sub  <- roc_all_df.llf %>% filter(Antibody==ab)
+    gene <- unique(sub$Gene)
+    p <- ggplot(sub, aes(FPR, TPR, color = Virus)) +
+      geom_line(size=1) + geom_abline(linetype="dashed") +
+      labs(title = paste0("", gene, " MaxAUC=", sprintf("%.3f", max(sub$AUC))),
+           x="False Positive Rate", y="True Positive Rate") +
+      theme_minimal(base_size=12)
+    ggsave(file.path(opt$out_dir, paste0("roc_", gene, "_llf.png")), p, width=5.5, height=5, dpi=300, bg = "white")
+  }
+}
 # Supplementary Figure 1 across HSVs
+# Top antibodies per virus
+
 for (ii in c(1:9)) {
   virus_name = species_list[ii]
   paint = color[ii]
   message("Processing: ", virus_name)
   
-  subgroup <- subset(auc_tab_df, Virus == virus_name)
-  subgroup$Gene <- make.unique(as.character(subgroup$Gene))
-  subgroup <- subgroup[order(subgroup$AUC, decreasing = F),]
-  subgroup$Gene <- factor(subgroup$Gene, levels = subgroup$Gene)
+  subgroup <- subset(auc_tab_df.lec, Virus == virus_name)
+  subgroup1 <- subgroup %>%
+    group_by(Gene) %>%
+    slice_max(order_by = AUC, with_ties = FALSE) %>%
+    ungroup()
   
-  p <- ggplot(subgroup, aes(x = Gene, y = AUC)) +
+  subgroup1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  subgroup1$Gene)
+  subgroup1 <- subgroup1[order(subgroup1$AUC, decreasing = F),]
+  subgroup1$Gene <- factor(subgroup1$Gene, levels = subgroup1$Gene)
+
+  p <- ggplot(subgroup1, aes(x = Gene, y = AUC)) +
     geom_bar(stat = "identity", fill=paint) +
     coord_flip() +
     ylim(0, 1) +  
@@ -162,26 +338,64 @@ for (ii in c(1:9)) {
       x = "Gene Symbol",
       y = "AUC"
     ) +
-    theme(plot.title = element_text(face = "bold", size = 14))
+    theme(plot.title = element_text(face = "bold", size = 14), axis.title  = element_text(size = 12), axis.text   = element_text(size = 11))
   
   print(p)
   
-  ggsave(file.path(opt$out_dir, paste0("auc_by_",virus_name,".png")), plot = p, width = 9, height = 7, dpi = 300)
+  ggsave(file.path(opt$out_dir, paste0("auc_by_",virus_name,"_lec.png")), plot = p, width = 9, height = 14, dpi = 300, bg = "white")
+}
+
+for (ii in c(1:9)) {
+  virus_name = species_list[ii]
+  paint = color[ii]
+  message("Processing: ", virus_name)
+  
+  subgroup <- subset(auc_tab_df.llf, Virus == virus_name)
+  subgroup1 <- subgroup %>%
+    group_by(Gene) %>%
+    slice_max(order_by = AUC, with_ties = FALSE) %>%
+    ungroup()
+  
+  subgroup1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  subgroup1$Gene)
+  subgroup1 <- subgroup1[order(subgroup1$AUC, decreasing = F),]
+  subgroup1$Gene <- factor(subgroup1$Gene, levels = subgroup1$Gene)
+  
+  p <- ggplot(subgroup1, aes(x = Gene, y = AUC)) +
+    geom_bar(stat = "identity", fill=paint) +
+    coord_flip() +
+    ylim(0, 1) +  
+    theme_minimal(base_size = 12) +
+    labs(
+      title = paste(virus_name),
+      x = "Gene Symbol",
+      y = "AUC"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14), axis.title  = element_text(size = 12), axis.text   = element_text(size = 11))
+  
+  print(p)
+  
+  ggsave(file.path(opt$out_dir, paste0("auc_by_",virus_name,"_llf.png")), plot = p, width = 9, height = 14, dpi = 300, bg = "white")
 }
 
 # Correlation among key Abs (train set)
-keep_abs <- intersect(ab_tbl$hid, colnames(merge_train))
+ab_tbl = subset(auc_merge, auc_merge$AUC.x>0.85 & auc_merge$AUC.y>0.8)
+ab_tbl = ab_tbl[order(ab_tbl$Virus, ab_tbl$Gene),]
+keep_abs <- as.factor(ab_tbl$Antibody)
+
 if (length(keep_abs) >= 2) {
   cor_mat <- cor(merge_train[, ..keep_abs], method="pearson", use="pairwise.complete.obs")
-  colnames(cor_mat) <- ab_tbl$gene[match(colnames(cor_mat), ab_tbl$hid)]
+  colnames(cor_mat) <- ab_tbl$Gene[match(colnames(cor_mat), ab_tbl$Antibody)]
   rownames(cor_mat) <- colnames(cor_mat)
   ragg::agg_png(
-    file.path(opt$out_dir, "figure4F_abs_correlation.png"),
-    width = 1800, height = 1800, res = 300
+    file.path(opt$out_dir, "figure4F_correlation_llf.png"),
+    width = 3000, height = 3000, res = 300
   )
-  corrplot(cor_mat, method="color", type="upper", tl.cex=1.0, tl.col="black", tl.srt=45, addCoef.col="black")
+  corrplot(cor_mat, method="color", type="upper", title = "", mar = c(0, 0, 2, 0),
+           number.cex=0.7, tl.cex=1.0, tl.col="black", tl.srt=45, addCoef.col="black")
   dev.off()
 }
+
+
 
 # ---- main function (drop-in) ----
 run_lasso_feature_analysis <- function(
@@ -189,8 +403,8 @@ run_lasso_feature_analysis <- function(
     antibody_id,             # e.g., "h6808"
     gene_id,                 # e.g., "PHLDA1" (for titles)
     train_vi_anno,           # annotation table with at least UniProt_acc, taxon_species, product
-    train_vi, train_hu,      # MGBB/LLF binary matrices with Sample_ID and features
-    test_vi, test_hu,        # ABC binary matrices with Sample_ID and features
+    train_vi, train_hu,      # MGBB/LLF binary matrices with Sample_Id and features
+    test_vi, test_hu,        # LEC binary matrices with Sample_Id and features
     out_dir,                 # output directory
     color_map
 ) {
@@ -198,42 +412,39 @@ run_lasso_feature_analysis <- function(
   
   # standardize species labels in the annotation
   train_vi_anno <- train_vi_anno %>% mutate(taxon_species = species_label_map(taxon_species))
-  
-  # allow user to pass long or short virus name
-  virus_short <- species_label_map(virus_name)
-  
+
   # 1) collect UniProt IDs for this virus present in BOTH train and test
   virus_pro <- train_vi_anno %>%
-    filter(taxon_species == virus_short) %>%
+    filter(taxon_species == virus_name) %>%
     pull(UniProt_acc) %>%
     intersect(colnames(train_vi)) %>%
     intersect(colnames(test_vi))
   
   if (!length(virus_pro)) {
-    message("No viral proteins found for ", virus_short, " that are shared in train and test.")
+    message("No viral proteins found for ", virus_name, " that are shared in train and test.")
     return(NULL)
   }
   
   # 2) build train & test joined frames
-  train_all <- train_hu %>% right_join(train_vi, by = "Sample_ID")
-  test_all  <- test_hu  %>% right_join(test_vi,  by = "Sample_ID")
+  train_all <- train_hu %>% right_join(train_vi, by = "Subject_Id")
+  test_all  <- test_hu  %>% right_join(test_vi,  by = "Sample_Id")
   
   needed_cols <- c(virus_pro, antibody_id)
   if (!all(needed_cols %in% colnames(train_all))) {
-    message("Missing columns in training data for ", virus_short, " / ", antibody_id)
+    message("Missing columns in training data for ", virus_name, " / ", antibody_id)
     return(NULL)
   }
   if (!all(needed_cols %in% colnames(test_all))) {
-    message("Missing columns in test data for ", virus_short, " / ", antibody_id)
+    message("Missing columns in test data for ", virus_name, " / ", antibody_id)
     return(NULL)
   }
   
-  # keep only required columns; binarize defensively
-  df_train <- train_all %>% select(all_of(needed_cols)) %>% binarize01_df()
-  df_test  <- test_all  %>% select(all_of(needed_cols))  %>% binarize01_df()
+  # keep only required columns
+  df_train <- train_all %>% select(all_of(needed_cols))
+  df_test  <- test_all  %>% select(all_of(needed_cols))
   y_tr <- df_train[[antibody_id]]
   y_te <- df_test[[antibody_id]]
-
+  
   # 3) model matrices
   # combine to build a consistent design; then split back
   df_comb <- rbind(df_train, df_test)
@@ -248,7 +459,7 @@ run_lasso_feature_analysis <- function(
   y_train <- y[seq_len(n_tr)]
   X_test  <- X[-seq_len(n_tr), , drop = FALSE]
   y_test  <- y[-seq_len(n_tr)]
-
+  
   # glmnet can handle the intercept internally
   if ("(Intercept)" %in% colnames(X_train)) {
     Xi <- which(colnames(X_train) == "(Intercept)")
@@ -271,7 +482,7 @@ run_lasso_feature_analysis <- function(
   # remove intercept if present
   keep <- vars != "(Intercept)"
   vars <- vars[keep]; betas <- betas[keep]
-
+  
   keys <- tibble::tibble(variables = vars, beta = betas)
   
   # 5) annotate with product names
@@ -309,35 +520,14 @@ run_lasso_feature_analysis <- function(
     ))
   
   keys3 = subset(keys2, keys2$P_Value < 0.05)
-
+  
   for (pat in names(clean_replace)) {
     keys3$product <- gsub(pat, clean_replace[[pat]], keys3$product, fixed = TRUE)
   }
   
-  # 7) coefficient plot
-  p_coef <- ggplot(keys3, aes(x = reorder(variables, -abs(beta)), y = beta, fill = product)) +
-    geom_col(color = "black") +
-    geom_text(aes(label = sig_marker,
-                  y = ifelse(beta > 0, beta + 0.05, beta - 0.05)),
-              size = 3) +
-    labs(title = paste0("Prediction model of ", virus_short, " peptides for ", gene_id),
-         x = paste(virus_short, "peptides"), y = "LASSO weight", fill = "Product") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
-          axis.text.y = element_text(size = 8),
-          legend.title = element_text(size=8),
-          legend.text = element_text(size=7),
-          legend.key.size = unit(0.5, "cm"),
-          plot.title = element_text(face = "bold", size = 12)) +
-    scale_fill_discrete()
-  
-  ragg::agg_png(file.path(out_dir, paste0("figure4_", virus_short, "_", antibody_id, "_weights.png")),
-                width = 2300, height = 1500, res = 300)
-  print(p_coef); dev.off()
-  
-  # 8) ABC per-variable 2×2 metrics (sensitivity/specificity/AUC_1threshold)
-  #    Evaluate *each* selected viral peptide individually on ABC
-  results_abc <- lapply(keys3$variables, function(v) {
+  # 7) LEC per-variable 2×2 metrics (sensitivity/specificity/AUC_1threshold)
+  #    Evaluate *each* selected viral peptide individually on LEC
+  results_lec <- lapply(keys3$variables, function(v) {
     if (!v %in% colnames(test_vi)) return(NULL)
     # make sure they're 0/1 numeric
     a <- as.integer(test_hu[[antibody_id]])
@@ -354,20 +544,20 @@ run_lasso_feature_analysis <- function(
     auc1 <- (sens + spec)/2
     pv <- tryCatch(chisq.test(tt)$p.value, error = function(e) NA_real_)
     data.frame(Variable=v, Sensitivity=sens, Specificity=spec,
-               AUC_1threshold=auc1, P.value=pv, stringsAsFactors = FALSE)
+               AUC_1threshold=auc1, P.value=pv, hid=antibody_id, Gene=gene_id, stringsAsFactors = FALSE)
   })
-  results_abc <- data.table::rbindlist(results_abc, fill = TRUE, use.names = TRUE)
-  results_abc <- results_abc[order(-AUC_1threshold), ]
-  results_abc1 <- left_join(results_abc, vi_anno_for_plot[, c("UniProt_acc","product")],
+  results_lec <- data.table::rbindlist(results_lec, fill = TRUE, use.names = TRUE)
+  results_lec <- results_lec[order(-AUC_1threshold), ]
+  results_lec1 <- left_join(results_lec, train_vi_anno[, c("UniProt_acc","product", "taxon_species")],
                             by = c("Variable"="UniProt_acc"))
   
   # save the table
-  data.table::fwrite(results_abc1,
-                     file.path(out_dir, paste0("figure4_", virus_short, "_", antibody_id, "_ABC_metrics.tsv")),
-                     sep = "\t")
+  data.table::fwrite(results_lec1,
+                     file.path(out_dir, paste0("figure4_", virus_name, "_", gene_id, "_LEC_metrics.csv")),
+                     sep = ",")
   
-  # 9) ABC scatter (Sensitivity vs Specificity, colored by AUC_1threshold)
-  plot_data <- results_abc %>% filter(!is.na(Sensitivity), !is.na(Specificity))
+  # 9) LEC scatter (Sensitivity vs Specificity, colored by AUC_1threshold)
+  plot_data <- results_lec %>% filter(!is.na(Sensitivity), !is.na(Specificity))
   p_roc <- ggplot(plot_data, aes(x = Sensitivity, y = Specificity,
                                  color = AUC_1threshold, label = Variable)) +
     geom_point(size = 2.8) +
@@ -375,34 +565,29 @@ run_lasso_feature_analysis <- function(
     scale_color_viridis_c(option = "plasma", limits = c(0.5, 1), name = expression(AUC)) +
     theme_minimal() +
     coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-    labs(title = paste0(virus_short, " peptides for ", gene_id, " in ABC cohort"),
-         x = "Sensitivity", y = "Specificity") +
+    labs(x = "Sensitivity", y = "Specificity", title = paste0("",virus_name," peptides for ",gene_id,"")) +
     theme(legend.text = element_text(size = 8),
           plot.title  = element_text(hjust = 0.5, size = 12),
           axis.title  = element_text(size = 10),
           axis.text   = element_text(size = 8))
   
-  ragg::agg_png(file.path(out_dir, paste0("figure4_", virus_short, "_", antibody_id, "_ROC.png")),
-                width = 1600, height = 1600, res = 300)
+  ragg::agg_png(file.path(out_dir, paste0("figure4_", virus_name, "_", gene_id, "_ROC.png")),
+                width = 1000, height = 1000, res = 300)
   print(p_roc); dev.off()
   
-  invisible(list(coef = keys2, abc_metrics = results_abc1))
+  invisible(list(coef = keys2, lec_metrics = results_lec1))
 }
 
 # Run for the main 5 panels
-pairs_to_run <- list(
-  list(virus = "Human alphaherpesvirus 1", ab = "h6808",  Gene = "PHLDA1"),
-  list(virus = "Human betaherpesvirus 5",   ab = "h6329", Gene = "ZNF550"),
-  list(virus = "Human betaherpesvirus 5",   ab = "h3143",  Gene = "IQCB1"),
-  list(virus = "Human betaherpesvirus 5",   ab = "h8069",  Gene = "DNAJC12"),
-  list(virus = "Human gammaherpesvirus 4",   ab = "h8250",  Gene = "P3H4")
-)
+pairs_to_run <- split(ab_tbl, seq(nrow(ab_tbl)))
 
 for (pair in pairs_to_run) {
-  run_lasso_feature_analysis(pair$virus, pair$ab, pair$Gene,
+  run_lasso_feature_analysis(pair$Virus, pair$Antibody, pair$Gene,
                              train_vi_anno = train_vi_anno,
                              train_vi = train_vi, train_hu = train_hu,
                              test_vi = test_vi,   test_hu  = test_hu,
                              out_dir = opt$out_dir,
                              color_map = color_map)
 }
+
+system(paste0("awk '(NR == 1) || (FNR > 1)' ",opt$out_dir,"figure4*_metrics.csv  > ",opt$out_dir,"auc_virus_metrics.csv"))
