@@ -8,26 +8,16 @@ suppressPackageStartupMessages({
 opts <- list()
 opt_list <- list(
   make_option("--llf_phe", type="character",
-              help="LLF phenotype CSV (e.g., llf_pheno.tsv)"),
+              help="LLF phenotype CSV (e.g., llf_1290_phe.tsv)"),
   make_option("--lec_phe", type="character",
-              help="LEC phenotype CSV (e.g., leo_pheno.tsv)"),
+              help="LEC phenotype CSV (e.g., lec_763_phe.tsv)"),
   make_option("--out_dir", type="character", default="results",
               help="Output directory [default %default]"),
-  make_option("--llf_exclude", type="character", default="AIDS,Depression,HepatitisB,HepatitisC,Migraine,Opioid_use_disorder,Headache,Asthma,Chronic_viral_hepatitis",
-              help="Comma-separated disease base names to exclude (without suffix) for LLF"),
-  make_option("--lec_exclude", type="character", default="AIDS,Depression,HepatitisB,HepatitisC,Migraine,Opioid_use_disorder,Headache,Asthma,Chronic_viral_hepatitis",
-              help="Comma-separated disease base names to exclude (without suffix) for LEO"),
   make_option("--llf_min_total", type="double", default=1290*0.01,
               help="Min total cases (incident+prevalent) to display for LLF [default %default]"),
   make_option("--lec_min_total", type="double", default=763*0.01,
-              help="Min total cases (incident+prevalent) to display for LEO [default %default]"),
-  make_option("--llf_title", type="character",
-              default="Incident and Prevalent Diseases in MGBB-LLF",
-              help="Title for LLF plot [default %default]"),
-  make_option("--lec_title", type="character",
-              default="Incident and Prevalent Diseases in MGBB-LEC",
-              help="Title for LEC plot [default %default]")
-)
+              help="Min total cases (incident+prevalent) to display for LEO [default %default]")
+  )
 opt <- parse_args(OptionParser(option_list = opt_list))
 
 dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
