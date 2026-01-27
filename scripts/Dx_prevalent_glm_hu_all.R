@@ -7,12 +7,24 @@ suppressPackageStartupMessages({
 
 # ----------------------------- CLI -----------------------------
 option_list <- list(
-  make_option("--phe",      type="character", help="llf_1290_phe.tsv"),
-  make_option("--vi_bin",   type="character", help="hsv_proteins_binary.tsv"),
-  make_option("--hu_bin",   type="character", help="human_fl_binary.tsv"),
-  make_option("--dx_count", type="character",
-              help="a directory containing prevalence/incidence files"),
-  make_option("--out_dir",  type="character", default="results/Dx_pre", help="Output dir")
+  make_option("--llf_pheno",      type="character", help="llf_1290_phe.tsv"),
+  make_option("--llf_vi_promax",   type="character", help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--llf_hu_fl",   type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--llf_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LLF.tsv"),
+  make_option("--llf_hu_bin",   type="character", help="human_fl_bin_MGBB-LLF.tsv"),
+  make_option("--rep_llf",   type="character", help="hsv_bin_fchange_rep_llf.tsv"),
+  make_option("--llf_dx_count",   type="character", help="llf_case_counts_filtered.csv"),
+  make_option("--lec_pheno",   type="character", help="lec_763_phe.tsv"),
+  make_option("--lec_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LEC.tsv"),
+  make_option("--lec_hu_bin",   type="character", help="human_fl_bin_MGBB-LEC.tsv"),
+  make_option("--abc_vi_promax",   type="character", help="IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--abc_hu_fl",   type="character", help="IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--leo_vi_promax",   type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
+  make_option("--leo_hu_fl",   type="character", help="IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
+  make_option("--rep_lec",   type="character", help="hsv_bin_fchange_rep_lec.tsv"),
+  make_option("--lec_dx_count",   type="character", help="lec_case_counts_filtered.csv"),
+  make_option("--sig_ab",   type="character", help="lec_test_auc_summary_sig.csv"),
+  make_option("--out_dir",  type="character", default="results/Disease", help="Output dir")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
