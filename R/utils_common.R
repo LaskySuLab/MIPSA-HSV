@@ -11,20 +11,6 @@ read_any <- function(path) {
   stop("Unsupported file extension for: ", path)
 }
 
-#' Binarize numeric fold-change/hit scores to 0/1 with threshold
-binarize01_df <- function(df) {
-  out <- as.data.frame(df)
-  for (j in seq_along(out)) {
-    v <- out[[j]]
-    if (is.numeric(v)) {
-      v[is.na(v)] <- 0
-      v[v != 0] <- 1
-      out[[j]] <- v
-    }
-  }
-  out
-}
-
 #' Make covariates (harmonize race, sex, smoking, alcohol) as in manuscript
 make_covariates <- function(phe,
                             id_col="Sample_ID",
@@ -33,34 +19,34 @@ make_covariates <- function(phe,
                             bmi_col="BMI_most_recent",
                             smoke_cols=c("Smoking_flag_Biobank","Smoking_RPDR_most_recent"),
                             alcohol_cols=c("Alcohol_flag_Biobank","Alcohol_RPDR_most_recent")) {
-
+  
   df <- as.data.table(phe)
   setnames(df, old=id_col, new="Sample_ID", skip_absent=TRUE)
-
+  
   # Sex/Gender -> 0/1 (M=0, F=1)
   if (sex_col %in% names(df)) df[, Gender01 := ifelse(get(sex_col) %in% c("F","Female"), 1L, 0L)] else df[, Gender01:=NA_integer_]
-
+  
   # Race -> White=0, Non-White=1
   if (race_col %in% names(df)) df[, Race01 := ifelse(get(race_col) == "White", 0L, 1L)] else df[, Race01:=NA_integer_]
-
+  
   # Smoking (Current/Former vs other)
   smoking <- c("Current-smoker","Former-smoker")
   s1 <- if (smoke_cols[1] %in% names(df)) df[[smoke_cols[1]]] else NA
   s2 <- if (smoke_cols[2] %in% names(df)) df[[smoke_cols[2]]] else NA
   s <- ifelse(s1 %in% smoking | s2 %in% smoking, "Current/Former-smoker", "Other/Unknown")
   df[, Smoking01 := as.integer(s == "Current/Former-smoker")]
-
+  
   # Alcohol (Current/Former vs none/unknown)
   alc_now <- c("Current-drinker","Former-drinker")
   a1 <- if (alcohol_cols[1] %in% names(df)) df[[alcohol_cols[1]]] else NA
   a2 <- if (alcohol_cols[2] %in% names(df)) df[[alcohol_cols[2]]] else NA
   a <- ifelse(a1 %in% alc_now | a2 %in% alc_now, "Current/Former-drinker", "Other/Unknown")
   df[, Alcohol01 := as.integer(a == "Current/Former-drinker")]
-
+  
   # BMI, Age
   if (bmi_col %in% names(df)) df[, BMI := as.numeric(get(bmi_col))] else df[, BMI:=NA_real_]
   if ("Age_at_collect" %in% names(df)) df[, Age := as.numeric(Age_at_collect)] else df[, Age:=NA_real_]
-
+  
   keep <- c("Sample_ID","Age","Gender01","BMI","Race01","Smoking01","Alcohol01")
   unique(df[, ..keep])
 }
@@ -95,43 +81,132 @@ color_map <- setNames(
   c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B","HHV-7","EBV","HHV-8")
 )
 
+species_levels <- c("HSV-1","HSV-2","VZV","CMV","HHV-6A","HHV-6B","HHV-7","EBV","HHV-8")
 
-#' optional cleanups of product names
-clean_replace <- c(
-    "Alkaline nuclease (EC 3.1.-.-)" = "Alkaline nuclease",
-    "Deneddylase (EC 3.4.19.12)" = "Deneddylase",
-    "E3 ubiquitin-protein ligase ICP0 (EC 6.3.2.-)" = "E3 ubiquitin-protein ligase",
-    "Large tegument protein deneddylase (EC 3.4.19.12) (EC 3.4.22.-)" = "Large tegument protein deneddylase",
-    "Nuclear egress protein 2" = "Nuclear egress protein",
-    "Thymidine kinase (EC 2.7.1.21)" = "Thymidine kinase",
-    "US11 *1;US11 *1" = "Protein US11",
-    "Uracil-DNA glycosylase (UDG) (EC 3.2.2.27) (UNG)" = "Uracil-DNA glycosylase",
-    
-    "Envelope glycoprotein UL130" = "Envelope glycoprotein",
-    "Membrane RL1 protein2 (Membrane protein RL12)" = "Membrane protein",
-    "Membrane glycoprotein US3;Membrane glycoprotein US3" = "Membrane glycoprotein",
-    "Membrane glycoprotein US7;Membrane glycoprotein US7" = "Membrane glycoprotein",
-    "Membrane protein RL12;Membrane protein RL12" = "Membrane protein",
-    "Membrane protein RL13;Membrane protein RL13" = "Membrane protein",
-    "Membrane protein RL12" = "Membrane protein",
-    "Membrane protein UL20" = "Membrane protein",
-    "Tegument protein UL43" = "Tegument protein",
-    "UL37" = "Protein UL37",
-    " immediate early glycoprotein" = "",
-    
-    "Envelope glycoprotein gpUL55" = "Envelope glycoprotein",
-    "Immediate early protein " = "",
-    "Membrane RL1 protein2 (Membrane protein RL12)" = "Membrane protein",
-    "Membrane RL1 protein2;Membrane RL1 protein2" = "Membrane protein",
-    "Membrane glycoprotein US7;Membrane glycoprotein US7" = "Membrane glycoprotein",
-    "ORFS326C;ORFS326C;ORFS326C" = "ORFS326C",
-    "Transmembrane protein HWLF3" = "Transmembrane protein",
-    "UL74 protein" = "Protein UL74",
-    
-    "BZLF1 (BZLF1 protein)" = "Transcriptional activator",
-    "EBNA3C (EBNA3C nuclear protein)" = "EBV nuclear antigen",
-    "Nuclear antigen EBNA-3C;Nuclear antigen EBNA-3C" = "EBV nuclear antigen",
-    "Nuclear protein EBNA-2" = "EBV nuclear antigen",
-    "Protein BRRF1;Protein BRRF1;Protein BRRF1" = "Transcriptional activator",
-    "Uncharacterized protein BLRF3" = "Uncharacterized protein"
+cap_vals <- function(x, cap) pmin(x, cap)
+
+# collapse (antibody x product) to min P for Manhattan
+collapse_minP <- function(dt) {
+  dt %>%
+    mutate(product1 = paste0(gene_symbol, "_", product)) %>%
+    group_by(product1) %>%
+    slice_min(order_by = P, with_ties = FALSE) %>%
+    ungroup()
+}
+
+
+# Disease categories
+dx_categories <- list(
+  
+  Auto_organ = c(
+    "Alopecia_areata", "Autoimmune_hemolytic_anemia",
+    "Autoimmune_hepatitis", "Celiac_disease", "Graves_disease", "Guillain_Barre_syndrome",
+    "Hashimoto_thyroiditis", "Inflammatory_bowel_disease", "Multiple_sclerosis",
+    "Myasthenia_gravis", "Neuromyelitis_optica", "Pemphigus", "Pernicious_anemia",
+    "Psoriasis", "Type1_Diabetes", "Vitiligo"
+  ),
+  
+  Auto_system = c(
+    "Ankylosing_spondylitis", "Behcet_disease", "Dermatomyositis",
+    "Giant_cell_arteritis", "Polymyalgia_rheumatica", "Rheumatoid_arthritis", "Scleroderma",
+    "Sjogren_syndrome", "Systemic_lupus_erythematosus"
+  ),
+  
+  Oncology = c(
+    "Bladder_cancer", "Breast_cancer", "Cancer", "Colon_Rectum_cancer", "Leukemia",
+    "Liver_cancer", "Lung_cancer", "Melanoma", "Non_Hodgkin_Lymphoma",
+    "Ovary_cancer", "Pancrease_cancer", "Prostate_cancer", "Stomach_cancer",
+    "Uterine_corpus_cancer"
+  ),
+  
+  Cardio = c(
+    "Aortic_aneurysm_dissection", "Arterial_embolism_thrombosis", "Cardiomyopathy",
+    "Chronic_pulmonary_heart_disease", "Congestive_heart_failure",
+    "Coronary_artery_disease", "CVD_excl_stroke", "Hypertensive_heart_disease",
+    "Myocardial_infarction", "Peripheral_vascular_disease", "Stroke"
+  ),
+  
+  Neuro = c(
+    "Alzheimer", "CognitiveDeficit", "FrontotemporalDementia",
+    "LewyBody", "NonSpec_Dementia", "Parkinson", "VascularDementia"
+  ),
+  
+  Respiratory = c(
+    "Allergic_rhinitis", "Bronchiectasis", "Chronic_Bronchitis",
+    "Coin_lesion_lung_disease", "COPD", "Emphysema", "Interstitial_lung_disease"
+  ),
+  
+  Hepatic = c(
+    "Alcohol_liver_disease", "Chronic_liver_disease", "Chronic_viral_hepatitis",
+    "Cirrhosis", "NAFLD", "Other_chronic_heptitis"
+  ),
+  
+  Metabolic_Renal = c(
+    "Chronic_kidney_disease", "Hypoparathyroidism", "Type2_Diabetes"
+  )
+)
+
+# Lab test categories
+lab_categories <- list(
+  
+  # 1. Metabolic, Endocrine & Bone
+  Endo_Metabolic = c(
+    "Glucose_most_recent", "HbA1c_most_recent",
+    "Thyroid_sti_hormone_most_recent", "Thyroxine_T3_most_recent",
+    "VitD_25OH_most_recent", "Ferritin_most_recent"
+  ),
+  
+  # 2. Cardiovascular & Lipids
+  Cardio_Lipid = c(
+    "Systolic_most_recent", "Diastolic_most_recent",
+    "Total_cholesterol_most_recent", "HDL_most_recent", "LDL_most_recent",
+    "VLDL_most_recent", "Triglyceride_most_recent"
+  ),
+  
+  # 3. Renal (Kidney) & Electrolytes
+  Renal_Electro = c(
+    "BUN_most_recent", "Creatinine_most_recent", "Glomerular_fil.rate_most_recent",
+    "Potassium_most_recent", "Chloride_most_recent", "Calcium_most_recent",
+    "Magnesium_most_recent", "Phosphorus_most_recent"
+  ),
+  
+  # 4. Hepatic (Liver) & Proteins
+  Hepatic = c(
+    "ALT_most_recent", "AST_most_recent", "ALP_most_recent",
+    "TBILI_most_recent", "DBILI_most_recent",
+    "Albumin_most_recent", "Total.Protein_most_recent", "Globulin_most_recent",
+    "LDH_most_recent", "Lactate_most_recent"
+  ),
+  
+  # 5. Hematology: Red Blood Cells
+  RBC = c(
+    "RBC_most_recent", "Hemoglobin_most_recent", "HCT_most_recent",
+    "Mean_Corpus_Vol_most_recent", "RDW_most_recent"
+  ),
+  
+  # 6. Hematology: White Blood Cells (Immune)
+  WBC = c(
+    "WBC_most_recent",
+    "Neutrophil_count_most_recent", "Neutrophil_pct_most_recent",
+    "Lymphocyte_count_most_recent", "Lymphocyte_pct_most_recent",
+    "Monocyte_count_most_recent", "Monocyte_pct_most_recent",
+    "Eosinophil_count_most_recent", "Eosinophil_pct_most_recent",
+    "Basophil_count_most_recent", "Basophil_pct_most_recent",
+    "imGran_count_most_recent", "imGran_pct_most_recent"
+  ),
+  
+  # 7. Hematology: Platelets & Coagulation
+  PLT_Coag = c(
+    "Platelet_most_recent", "Mean_Platelet_Vol_most_recent", "PT_test_most_recent"
+  ),
+  
+  # 8. Inflammation & Allergy
+  Inflammation = c(
+    "CRP_most_recent", "ESR_most_recent", "IgE_most_recent"
+  ),
+  
+  # 9. Pulmonary (Lung Function)
+  Pulmonary = c(
+    "FEV1_most_recent", "FVC_most_recent", "FEV1_FVC_most_recent"
+  )
 )
