@@ -9,17 +9,16 @@ suppressPackageStartupMessages({
 
 # ----------------------------- CLI -----------------------------
 option_list <- list(
-  make_option("--train_vi", type="character", help="MGBB LLF virus_bin.tsv"),
-  make_option("--train_hu", type="character", help="MGBB LLF human_fl_bin.tsv"),
-  make_option("--train_vi_anno", type="character", help="LLF VirSIGHT Promax FoB CSV"),
-  make_option("--train_hu_anno", type="character", help="LLF HuSIGHT FullLength FoB CSV"),
-  make_option("--test_vi", type="character", help="LEC virus bin.tsv"),
-  make_option("--test_hu", type="character", help="LEC human bin.tsv"),
-  # Figure 4 focus set (specific antibodies to showcase ROC, coefs, corr)
-  make_option("--species_map", type="character",
-              help="Semicolon sep 'Human alphaherpesvirus 1=HSV-1;Human betaherpesvirus 5=CMV;Human gammaherpesvirus 4=EBV'"),
+  make_option("--train_vi", type="character", help="hsv_promax_bin_MGBB-LLF.tsv"),
+  make_option("--train_hu", type="character", help="human_fl_bin_MGBB-LLF.tsv"),
+  make_option("--train_vi_anno", type="character", help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--train_hu_anno", type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--test_vi", type="character", help="hsv_promax_bin_MGBB-LEC.tsv"),
+  make_option("--test_hu", type="character", help="human_fl_bin_MGBB-LEC.tsv"),
+  make_option("--test_hu", type="character", help="hsv_bin_fchange_rep_llf.tsv"),
   make_option("--out_dir", type="character", default="results/Figure4", help="Output dir")
 )
+
 opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings=FALSE, recursive=TRUE)
 
