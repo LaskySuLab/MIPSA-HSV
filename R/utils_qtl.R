@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(data.table); library(dplyr)
   library(stats); library(purrr)
