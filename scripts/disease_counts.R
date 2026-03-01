@@ -8,16 +8,20 @@ suppressPackageStartupMessages({
 opts <- list()
 opt_list <- list(
   make_option("--llf_phe", type="character",
-              help="LLF phenotype CSV (e.g., llf_1290_phe.tsv)"),
+              help="LLF phenotype CSV (e.g., llf_1289_phe.tsv)"),
   make_option("--lec_phe", type="character",
               help="LEC phenotype CSV (e.g., lec_763_phe.tsv)"),
-  make_option("--out_dir", type="character", default="results",
+  make_option("--llf_exclude", type="character", default="Depression,Opioid_use_disorder,Alcoholism,toothache,sciatica,Psychosis,loose_tooth,
+              Asthma,Headache,Migraine,Post_Traumatic_Stress_Disorder,Bipolar_Disorder,Female_Infertility,Male_Infertility,
+              Chronic viral hepatitis,Schizophrenia,Chronic_viral_hepatitis,Other_chronic_heptitis,Alcohol_liver_disease,Hiatus_Hernia,
+              Diverticular,Cataract,Presbyopia,Mouth_ulcer",
+              help="Comma-separated disease base names to exclude (without suffix) for LLF"),
+  make_option("--out_dir", type="character", default="results/Figure1",
               help="Output directory [default %default]"),
-  make_option("--llf_min_total", type="double", default=1290*0.01,
-              help="Min total cases (incident+prevalent) to display for LLF [default %default]"),
-  make_option("--lec_min_total", type="double", default=763*0.01,
-              help="Min total cases (incident+prevalent) to display for LEO [default %default]")
+  make_option("--llf_min_total", type="double", default=1289*0.01,
+              help="Min total cases (incident+prevalent) to display for LLF [default %default]")
   )
+
 opt <- parse_args(OptionParser(option_list = opt_list))
 
 dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
@@ -75,7 +79,7 @@ plot_counts <- function(df_long, title_txt, subtitle_txt, outfile) {
     ) +
     scale_fill_manual(values = c("Prevalent" = "#1f78b4", "Incident" = "#F8766D")) +
     theme(
-      axis.text.x = element_text(angle = 60, hjust = 1, size =10),
+      axis.text.x = element_text(angle = 60, hjust = 1, size =8),
       axis.text   = element_text(size = 11),
       axis.title  = element_text(size = 14, face = "bold"),
       plot.title  = element_text(size = 16, face = "bold"),
@@ -124,8 +128,7 @@ capture.output(summary(llf$FU_years),
 # -------------------------------
 lec <- fread(opt$lec_phe)
 n_lec <- nrow(lec)
-exclude_lec <- strsplit(opt$lec_exclude, ",")[[1]] |> trimws()
-counts_lec  <- compute_counts(lec, exclude_lec, n_label = n_lec)
+counts_lec  <- compute_counts(lec, exclude_llf, n_label = n_lec)
 
 # Keep > threshold
 counts_lec_fil <- counts_lec %>% filter(disease %in% counts_llf_fil$disease)
