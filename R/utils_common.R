@@ -110,8 +110,8 @@ dx_categories <- list(
   
   Auto_system = c(
     "Ankylosing_spondylitis", "Behcet_disease", "Dermatomyositis",
-    "Giant_cell_arteritis", "Polymyalgia_rheumatica", "Rheumatoid_arthritis", "Scleroderma",
-    "Sjogren_syndrome", "Systemic_lupus_erythematosus"
+    "Giant_cell_arteritis", "Polymyalgia_rheumatica", "Rheumatoid_Arthritis", 
+    "Scleroderma", "Sjogren_syndrome", "Systemic_lupus_erythematosus"
   ),
   
   Oncology = c(
@@ -122,10 +122,11 @@ dx_categories <- list(
   ),
   
   Cardio = c(
-    "Aortic_aneurysm_dissection", "Arterial_embolism_thrombosis", "Cardiomyopathy",
-    "Chronic_pulmonary_heart_disease", "Congestive_heart_failure",
-    "Coronary_artery_disease", "CVD_excl_stroke", "Hypertensive_heart_disease",
-    "Myocardial_infarction", "Peripheral_vascular_disease", "Stroke"
+    "Aortic_aneurysm_dissection", "Arterial_embolism_thrombosis", "Atrial_fibrillation",
+    "Cardiomyopathy", "Chronic_pulmonary_heart_disease", "Congestive_heart_failure",
+    "Coronary_artery_disease", "CVD_excl_stroke", "Deep_venous_thrombosis", 
+    "Hypertensive_heart_disease", "Myocardial_infarction", 
+    "Peripheral_vascular_disease", "Stroke"
   ),
   
   Neuro = c(
@@ -134,16 +135,95 @@ dx_categories <- list(
   ),
   
   Respiratory = c(
-    "Allergic_rhinitis", "Bronchiectasis", "Chronic_Bronchitis",
-    "Coin_lesion_lung_disease", "COPD", "Emphysema", "Interstitial_lung_disease"
+    "Allergic_rhinitis", "Bronchiectasis", "Bronchitis_Emphysema", 
+    "Chronic_Bronchitis", "Coin_lesion_lung_disease", "COPD", "Emphysema", 
+    "Idiopathic_pulmonary_fibrosis", "Interstitial_lung_disease", "Pneumonia"
   ),
   
   Hepatic = c(
     "Alcohol_liver_disease", "Chronic_liver_disease", "Chronic_viral_hepatitis",
-    "Cirrhosis", "NAFLD", "Other_chronic_heptitis"
+    "Cirrhosis", "NAFLD", "Nonalcoholic_steatohepatitis", "Other_chronic_heptitis"
   ),
   
   Metabolic_Renal = c(
-    "Chronic_kidney_disease", "Hypoparathyroidism", "Type2_Diabetes"
+    "Chronic_kidney_disease", "Gout", "Hypoparathyroidism", 
+    "Hypothyroidism", "Type2_Diabetes"
+  ),
+  
+  Gastrointestinal = c(
+    "GERD", "Gallstone"
+  ),
+  
+  Musculoskeletal = c(
+    "Osteoarthritis", "osteoporosis"
+  ),
+  
+  Ophthalmic = c(
+    "Macular_Degeneration"
+  )
+)
+
+# Lab test categories
+lab_categories <- list(
+  
+  # 1. Metabolic, Endocrine & Bone
+  Endo_Metabolic = c(
+    "Glucose_most_recent", "HbA1c_most_recent",
+    "Thyroid_sti_hormone_most_recent", "Thyroxine_T3_most_recent",
+    "VitD_25OH_most_recent", "Ferritin_most_recent"
+  ),
+  
+  # 2. Cardiovascular & Lipids
+  Cardio_Lipid = c(
+    "Systolic_most_recent", "Diastolic_most_recent",
+    "Total_cholesterol_most_recent", "HDL_most_recent", "LDL_most_recent",
+    "VLDL_most_recent", "Triglyceride_most_recent"
+  ),
+  
+  # 3. Renal (Kidney) & Electrolytes
+  Renal_Electro = c(
+    "BUN_most_recent", "Creatinine_most_recent", "Glomerular_fil.rate_most_recent",
+    "Potassium_most_recent", "Chloride_most_recent", "Calcium_most_recent",
+    "Magnesium_most_recent", "Phosphorus_most_recent"
+  ),
+  
+  # 4. Hepatic (Liver) & Proteins
+  Hepatic = c(
+    "ALT_most_recent", "AST_most_recent", "ALP_most_recent",
+    "TBILI_most_recent", "DBILI_most_recent",
+    "Albumin_most_recent", "Total.Protein_most_recent", "Globulin_most_recent",
+    "LDH_most_recent", "Lactate_most_recent"
+  ),
+  
+  # 5. Hematology: Red Blood Cells
+  RBC = c(
+    "RBC_most_recent", "Hemoglobin_most_recent", "HCT_most_recent",
+    "Mean_Corpus_Vol_most_recent", "RDW_most_recent"
+  ),
+  
+  # 6. Hematology: White Blood Cells (Immune)
+  WBC = c(
+    "WBC_most_recent",
+    "Neutrophil_count_most_recent", "Neutrophil_pct_most_recent",
+    "Lymphocyte_count_most_recent", "Lymphocyte_pct_most_recent",
+    "Monocyte_count_most_recent", "Monocyte_pct_most_recent",
+    "Eosinophil_count_most_recent", "Eosinophil_pct_most_recent",
+    "Basophil_count_most_recent", "Basophil_pct_most_recent",
+    "imGran_count_most_recent", "imGran_pct_most_recent"
+  ),
+  
+  # 7. Hematology: Platelets & Coagulation
+  PLT_Coag = c(
+    "Platelet_most_recent", "Mean_Platelet_Vol_most_recent", "PT_test_most_recent"
+  ),
+  
+  # 8. Inflammation & Allergy
+  Inflammation = c(
+    "CRP_most_recent", "ESR_most_recent", "IgE_most_recent"
+  ),
+  
+  # 9. Pulmonary (Lung Function)
+  Pulmonary = c(
+    "FEV1_most_recent", "FVC_most_recent", "FEV1_FVC_most_recent"
   )
 )
