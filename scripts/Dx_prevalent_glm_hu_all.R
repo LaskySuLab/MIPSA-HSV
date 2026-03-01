@@ -9,8 +9,8 @@ suppressPackageStartupMessages({
 # ----------------------------- CLI -----------------------------
 option_list <- list(
   make_option("--phe",      type="character", help="llf_1289_phe.tsv"),
-  make_option("--vi_bin",   type="character", help="hsv_proteins_binary.tsv"),
-  make_option("--hu_bin",   type="character", help="human_fl_binary.tsv"),
+  make_option("--vi_bin",   type="character", help="hsv_proteins_binary.txt"),
+  make_option("--hu_bin",   type="character", help="human_fl_binary.txt"),
   make_option("--dx_count", type="character",
               help="a directory containing prevalence/incidence files"),
   make_option("--out_dir",  type="character", default="results/Dx_pre", help="Output dir")
@@ -19,7 +19,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Function for parallel processing for human antibodies
-run_glm_human <- function(ii, cohort_name, input_dt) {
+run_glm_virus <- function(ii, cohort_name, input_dt) {
   
   dx <- dx_list[ii]
   print(paste("Processing:", dx, "| Cohort:", cohort_name))
@@ -37,17 +37,17 @@ run_glm_human <- function(ii, cohort_name, input_dt) {
   n_control   <- sum(control_idx, na.rm = TRUE)
   
   # Calculate positive counts
-  case_pos_vec    <- colSums(input_dt[case_idx,    ..hu_var] > 1, na.rm = TRUE)
-  control_pos_vec <- colSums(input_dt[control_idx, ..hu_var] > 1, na.rm = TRUE)
+  case_pos_vec    <- colSums(input_dt[case_idx,    ..vi_var] > 1, na.rm = TRUE)
+  control_pos_vec <- colSums(input_dt[control_idx, ..vi_var] > 1, na.rm = TRUE)
   
   if (cohort_name=='llf'){
     covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + ics_trim_totnum_5y + cci"
   } else {covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + cci + cohort"}
   
   ## ---------- 2. Per-Protein Loop -----------------------------------------
-  glm_results <- lapply(seq_along(hu_var), function(j) {
+  glm_results <- lapply(seq_along(vi_var), function(j) {
     
-    var <- hu_var[j]
+    var <- vi_var[j]
     
     # --- Check for Sparsity (< 5 in any cell) ---
     c_pos <- case_pos_vec[j]
@@ -134,7 +134,7 @@ run_glm_human <- function(ii, cohort_name, input_dt) {
   setorder(out, P)
   
   # Filename includes cohort_name
-  outfile <- file.path(opt$out_dir, paste0("bin_fchange_hu_", dx, "_glm_", cohort_name, ".csv"))
+  outfile <- file.path(opt$out_dir, paste0("bin_fchange_vi_", dx, "_glm_", cohort_name, ".csv"))
   fwrite(out, file = outfile, row.names = FALSE, col.names = TRUE, quote = FALSE)
 }
 
@@ -146,12 +146,12 @@ read_results <- function(pattern) {
     dt <- fread(f)
     # infer disease/sex from filename if missing
     if (!"disease" %in% names(dt)) {
-      m <- regmatches(f, regexec("_hu_(.+?)_", f))[[1]]
+      m <- regmatches(f, regexec("_vi_(.+?)_", f))[[1]]
       if (length(m) >= 2) dt[, disease := m[2]]
     }
     if (!"cohort" %in% names(dt)) {
       if (grepl("_llf\\.csv", f))   dt[, cohort := "llf"]
-      if (grepl("_lec\\.csv", f)) dt[, cohort := "lec"]
+      if (grepl("_ale\\.csv", f)) dt[, cohort := "lec"]
       if (grepl("_all\\.csv", f)) dt[, cohort := "all"]
     }
     dt[, file := basename(f)]
@@ -175,21 +175,21 @@ if (!"var_id" %in% names(llf_hu_fl)) llf_hu_fl[, var_id := paste0("h", seq_len(.
 
 # Select subjects and Merge
 sample_lists = llf_phe1$Sample_Id
-llf.fl = subset(llf_hu_fl, select = sample_lists) #1289 subjects
-llf.fl[llf.fl==1] <- 0
+llf.vi = subset(llf_vi_promax, select = sample_lists) #1289 subjects
+llf.vi[llf.vi==1] <- 0
 
-llf.fl1 = as.data.frame(t(llf.fl))
-colnames(llf.fl1) = llf_hu_fl$var_id
-llf.fl1$Sample_Id = rownames(llf.fl1)
+llf.vi1 = as.data.frame(t(llf.vi))
+colnames(llf.vi1) = llf_vi_promax$UniProt_acc
+llf.vi1$Sample_Id = rownames(llf.vi1)
 
 merge_dt_raw.llf <- llf_phe1 %>%
-  right_join(llf.fl1, by = "Sample_Id") %>%
+  right_join(llf.vi1, by = "Sample_Id") %>%
   as.data.table()
 
 # ----------------------------- Run GLMs -----------------------------
 # Human FL predictors (all antibodies)
 rep_llf = fread(opt$rep_llf)
-hu_var <- unique(rep_llf$antibody) #93
+vi_var <- unique(rep_llf$var_id) #881
 
 # ----------------------------- Disease cols -----------------------------
 dx_cols <- grep("_combine$", colnames(merge_dt_raw.llf), value = TRUE)
@@ -206,7 +206,7 @@ dx_list <- setdiff(dx_list, paste0(ex_list,"_combine")) # 73 diseases
 dx_list <- gsub("_combine", "", dx_list)
 dx_list <- paste0(dx_list,"_at_collect")
 
-lapply(1:length(dx_list), run_glm_human, cohort_name = "llf", input_dt = merge_dt_raw.llf)
+lapply(1:length(dx_list), run_glm_virus, cohort_name = "llf", input_dt = merge_dt_raw.llf)
 
 # ----------------------------- IO in LEC------------------------------
 # Phenotype table and covariate processing in LEC
@@ -221,22 +221,21 @@ if (!"var_id" %in% names(abc_hu_fl)) abc_hu_fl[, var_id := paste0("h", .I)]
 leo_vi_promax <- fread(opt$leo_vi_promax)
 leo_hu_fl <- fread(opt$leo_hu_fl)
 
-abc_hu_fl1 = subset(abc_hu_fl, abc_hu_fl$pep_id%in%leo_hu_fl$pep_id)
-all(leo_hu_fl$pep_id==abc_hu_fl1$pep_id)
+all(leo_vi_promax$UniProt_acc==abc_vi_promax$UniProt_acc)
 # [1] TRUE
-
-lec_hu_fl = cbind(abc_hu_fl1, leo_hu_fl)
+# Raw data
+lec_vi_promax = cbind(abc_vi_promax, leo_vi_promax)
 
 sample_lists = lec_phe1$Sample_Id
-lec.fl <- subset(lec_hu_fl, select = sample_lists)
-lec.fl[lec.fl==1] <- 0
+lec.vi <- subset(lec_vi_promax, select = sample_lists)
+lec.vi[lec.vi==1] <- 0
 
-lec.fl1 = as.data.frame(t(lec.fl))
-colnames(lec.fl1) = lec_hu_fl$var_id
-lec.fl1$Sample_Id = rownames(lec.fl1)
+lec.vi1 = as.data.frame(t(lec.vi))
+colnames(lec.vi1) = lec_vi_promax$UniProt_acc
+lec.vi1$Sample_Id = rownames(lec.vi1)
 
 merge_dt_raw.lec <- lec_phe1 %>%
-  right_join(lec.fl1, by = "Sample_Id") %>%
+  inner_join(lec.vi1, by = "Sample_Id") %>%
   as.data.table()
 
 # ----------------------------- Disease cols -----------------------------
@@ -244,28 +243,27 @@ merge_dt_raw.lec <- lec_phe1 %>%
 dx_test <- colSums(merge_dt_raw.lec[, ..dx_list], na.rm = TRUE)
 length(dx_test)==length(dx_list)
 
-lapply(1:length(dx_list), run_glm_human, cohort_name = "lec", input_dt = merge_dt_raw.lec)
+lapply(1:length(dx_list), run_glm_virus, cohort_name = "lec", input_dt = merge_dt_raw.lec)
 
 # ----------------------------- IO in Pooled LLF-LEC------------------------------
 common_names = intersect(colnames(merge_dt_raw.lec), colnames(merge_dt_raw.llf))
 
-merge_dt_raw.all = rbind(merge_dt_raw.llf[, ..common_names], merge_dt_raw.lec[, ..common_names]) #2052 subjects
+merge_dt_raw.all = rbind(merge_dt_raw.llf[, ..common_names], merge_dt_raw.lec[, ..common_names]) #2053
 
 dx_test <- colSums(merge_dt_raw.all[, ..dx_list], na.rm = TRUE)
 length(dx_test)==length(dx_list)
 
-lapply(1:length(dx_list), run_glm_human, cohort_name = "all", input_dt = merge_dt_raw.all)
+lapply(1:length(dx_list), run_glm_virus, cohort_name = "all", input_dt = merge_dt_raw.all)
 
 # ----------------------------- Collect Data: Every cohorts -----------------------------
 
-hu.dx_all <- read_results("^bin_fchange_hu_.*_(llf|lec|all)\\.csv$")
-hu.dx_all <- hu.dx_all[,-c('file')]
-hu.dx_all$disease <- gsub('_at_collect', '', hu.dx_all$disease) 
-hu.dx_all = inner_join(llf_hu_fl[,c('var_id', 'gene_symbol','UniProt_acc', 'product')], hu.dx_all, by=c('var_id'))
-hu.dx_all$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  hu.dx_all$gene_symbol)
+vi.dx_all <- read_results("^bin_fchange_vi_.*_(llf|lec|all)\\.csv$")
+vi.dx_all <- vi.dx_all[,-c('file')]
+vi.dx_all$disease <- gsub('_at_collect', '', vi.dx_all$disease) 
+vi.dx_all = inner_join(llf_vi_promax[,c('UniProt_acc','taxon_species','taxon_genus', 'product')], vi.dx_all, by=c('UniProt_acc'='var_id'))
 
 ## Reshape data to wide format 
-res_wide <- dcast(hu.dx_all, disease + var_id + gene_symbol + UniProt_acc + product ~ cohort, 
+res_wide <- dcast(vi.dx_all, disease + UniProt_acc + taxon_genus + taxon_species + product ~ cohort, 
                   value.var = c("OR","Beta","SE","Z", "P","n_case",'n_control',"case_pos", "control_pos"))
 
 dx_lookup <- stack(dx_categories)
@@ -280,10 +278,13 @@ res_wide$p.adj_all = p.adjust(res_wide$P_all, method='fdr')
 res_wide$p.adj_llf = p.adjust(res_wide$P_llf, method='fdr')
 
 fwrite(res_wide,
-       file.path(opt$out_dir, "rep_hu_dx_all_pre_glmf_ann.tsv"),
+       file.path(opt$out_dir, "rep_vi_dx_all_pre_glmf_ann.tsv"),
+       sep = "\t", quote = FALSE)
+fwrite(subset(res_wide, res_wide$P_all <0.05) ,
+       file.path(opt$out_dir, "rep_vi_dx_all_pre_glmf_ann_sig.tsv"),
        sep = "\t", quote = FALSE)
 
-res_wide = fread(file.path(opt$out_dir, "rep_hu_dx_all_pre_glmf_ann.tsv"), head=T)
+res_wide = fread(file.path(opt$out_dir, "rep_vi_dx_all_pre_glmf_ann.tsv"), head=T)
 
 # Classify Significance
 res_wide[, Sig_Status := fcase(
@@ -293,11 +294,13 @@ res_wide[, Sig_Status := fcase(
   default =                    "Not Significant"
 )]
 
+res_wide$taxon_species <- species_label_map(res_wide$taxon_species)
+
 # Plot
 cutoff_p <- {
   sig_idx <- which(res_wide$p.adj_all < 0.05)
   if (length(sig_idx)) max(res_wide$P_all[sig_idx], na.rm = TRUE) else NULL
-} # [1] 4.032627e-05
+} #2.821267e-06
 
 p.all <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
   facet_grid(. ~ Category, scales = "free_x") +
@@ -306,7 +309,7 @@ p.all <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
                         midpoint = 1, limits = c(0, 2), oob = scales::squish) +
   geom_hline(yintercept = -log10(cutoff_p), color = "black", linetype = "dashed") +
   geom_hline(yintercept = -log10(0.05), color = "black", linetype = "solid") +
-  labs(title = 'The Replicated Human Autoantigens for Prevalent Diseases',
+  labs(title = 'The Replicated HSV peptides for Prevalent Diseases',
        y = expression('-log'[10]*'('*italic(P)*'-value)'),
        color = "OR") +
   theme_bw() +
@@ -319,19 +322,19 @@ p.all <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
     plot.title   = element_text(hjust = 0.5, size = 11),
     strip.text.x = element_text(size = 10),
     axis.title.x = element_text(size = 10),
-    axis.text.x  = element_text(angle = 70, hjust = 1, size = 7),
+    axis.text.x  = element_text(angle = 70, hjust = 1, size = 8),
     axis.text.y  = element_text(size = 10),
     axis.title.y = element_text(size = 10)
   )
 
 p.all <- p.all + ggrepel::geom_label_repel(
-  data = subset(res_wide, P_all < 5e-04),
-  aes(label = gene_symbol),
+  data = subset(res_wide, P_all < 1e-04),
+  aes(label = taxon_species),
   size = 2, segment.size = 0.1, direction = "both",
   segment.color = 'black', max.overlaps = 20
 )
 
-ggsave(file.path(opt$out_dir, "figure5_or_pre_all.png"), p.all, width = 12, height = 7, dpi = 300, bg='white')
+ggsave(file.path(opt$out_dir, "figure5_or_pre_all_virus.png"), p.all, width = 12, height = 7, dpi = 300, bg='white')
 
 # OR significance comparison
 p.or <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
@@ -343,7 +346,7 @@ p.or <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
                                 "Not Significant" = "grey80")) +
   geom_hline(yintercept = -log10(cutoff_p), color = "black", linetype = "dashed") +
   geom_hline(yintercept = -log10(0.05), color = "black", linetype = "solid") +
-  labs(title = 'The Replicated Human Autoantigens for Prevalent Diseases',
+  labs(title = 'The Replicated HSV peptides for Prevalent Diseases',
        y = expression('-log'[10]*'('*italic(P)*'-value)'),
        color = "OR") +
   theme_bw() +
@@ -356,18 +359,18 @@ p.or <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
     plot.title   = element_text(hjust = 0.5, size = 11),
     strip.text.x = element_text(size = 10),
     axis.title.x = element_text(size = 10),
-    axis.text.x  = element_text(angle = 70, hjust = 1, size = 7),
+    axis.text.x  = element_text(angle = 70, hjust = 1, size = 8),
     axis.text.y  = element_text(size = 10),
     axis.title.y = element_text(size = 10)
   )
 
 p.or <- p.or + ggrepel::geom_label_repel(
-  data = subset(res_wide, P_all < 5e-04),
-  aes(label = gene_symbol),
+  data = subset(res_wide, P_all < 1e-04),
+  aes(label = taxon_species),
   size = 2, segment.size = 0.1, direction = "both",
   segment.color = 'black', max.overlaps = 20
 )
-ggsave(file.path(opt$out_dir, "figure5_or_comparison_glm_all.png"), p.or, width = 12, height = 7, dpi = 300, bg='white')
+ggsave(file.path(opt$out_dir, "figure5_or_comparison_glm_all_virus.png"), p.or, width = 12, height = 7, dpi = 300, bg='white')
 
 # Beta comparison Plot
 p.beta = ggplot(res_wide, aes(x = Beta_lec, y = Beta_llf, color = Sig_Status)) +
@@ -380,7 +383,7 @@ p.beta = ggplot(res_wide, aes(x = Beta_lec, y = Beta_llf, color = Sig_Status)) +
                                 "MGBB-LLF Only" = "green", 
                                 "Not Significant" = "grey80")) +
   theme_minimal() +
-  labs(title = "Cohort comparison between MGBB-LLF and MGBB-LEC in Prevalent diseases",
+  labs(title = "Cohort comparison between MGBB-LLF and MGBB-LEC",
        subtitle = "Checking for consistency of effect direction",
        x = "Effect Size (MGBB-LEC)", 
        y = "Effect Size (MGBB-LLF)") +
@@ -398,8 +401,9 @@ p.beta = ggplot(res_wide, aes(x = Beta_lec, y = Beta_llf, color = Sig_Status)) +
   ) +
   # Optional: Label only the top significant hits to avoid clutter
   ggrepel::geom_label_repel(data = res_wide[Sig_Status == "Both Significant"], 
-                            aes(label = paste(disease, gene_symbol, sep="-")),
+                            aes(label = paste(disease, taxon_species, sep="-")),
                             size = 3, segment.size = 0.1, direction = "both",
                             segment.color = 'black', max.overlaps = 20)
 
-ggsave(file.path(opt$out_dir, "figure5_beta_glm_all.png"), p.beta, width = 12, height = 10, dpi = 300, bg='white')
+ggsave(file.path(opt$out_dir, "figure5_beta_glm_all_virus.png"), p.beta, width = 12, height = 10, dpi = 300, bg='white')
+
