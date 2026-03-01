@@ -26,6 +26,7 @@ opt_list <- list(
   make_option("--min_pep_prev", type="double", default=1,
               help="Minimum peptide prevalence (%) to show in ridgeline [default %default]")
 )
+
 opt <- parse_args(OptionParser(option_list = opt_list))
 dir.create(opt$out_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -87,6 +88,22 @@ leo_promax <- fread(opt$leo_promax)
 
 lec_promax = inner_join(abc_promax, leo_promax[,-c(2:5)], by=c('UniProt_acc'))
 
+llf_phe <- fread(opt$llf_phe)
+lec_phe <- fread(opt$lec_phe)
+
+rm_id = c(setdiff(colnames(llf_promax), llf_phe$Sample_Id), setdiff(colnames(lec_promax), lec_phe$Sample_Id))
+rm_id1 <- grep("^(AM_|0|1|L)", rm_id,   value = TRUE)
+
+actual_cols_llf <- intersect(rm_id1, names(llf_promax))
+if (length(actual_cols_llf) > 0) {
+  set(llf_promax, j = actual_cols_llf, value = NULL)
+}
+
+actual_cols_lec <- intersect(rm_id1, names(lec_promax))
+if (length(actual_cols_llf) > 0) {
+  set(lec_promax, j = actual_cols_lec, value = NULL)
+}
+
 # ---------- Make ridgelines ----------
 make_ridge(
   promax_df   = llf_promax,
@@ -106,7 +123,7 @@ message("Done. Wrote virus ridgeline plots to: ", normalizePath(opt$out_dir))
 
 
 #################################################################################
-# Human
+# Human antibodies
 
 make_ridge.fl <- function(fl_df, cohort, outfile_png, min_prev = 1) {
   if (!"var_id" %in% names(fl_df)) fl_df[, var_id := paste0("h", .I)]
@@ -160,7 +177,18 @@ llf_fl <- fread(opt$llf_fl)
 abc_fl <- fread(opt$abc_fl)
 leo_fl <- fread(opt$leo_fl)
 
-ale_fl = inner_join(abc_fl, leo_fl[,-c(1,3:10)], by=c('pep_id'))
+lec_fl = inner_join(abc_fl, leo_fl[,-c(1,3:10)], by=c('pep_id'))
+
+actual_cols_llf <- intersect(rm_id1, names(llf_fl))
+if (length(actual_cols_llf) > 0) {
+  set(llf_fl, j = actual_cols_llf, value = NULL)
+}
+
+actual_cols_lec <- intersect(rm_id1, names(lec_fl))
+if (length(actual_cols_llf) > 0) {
+  set(lec_fl, j = actual_cols_lec, value = NULL)
+}
+
 
 # ---------- Make ridgelines ----------
 make_ridge.fl(
@@ -171,10 +199,8 @@ make_ridge.fl(
 )
 
 make_ridge.fl(
-  fl_df   = ale_fl,
+  fl_df   = lec_fl,
   cohort      = "MGBB-LEC",
   outfile_png = file.path(opt$out_dir, "seroprev_human_fl_ridgeplot_lec.png"),
   min_prev    = opt$min_pep_prev
 )
-
-message("Done. Wrote human ridgeline plots to: ", normalizePath(opt$out_dir))
