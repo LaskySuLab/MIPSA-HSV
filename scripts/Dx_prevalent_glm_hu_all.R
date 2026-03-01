@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(stringr); library(purrr); library(tidyr);
   library(ggplot2); library(ggrepel); library(broom); library(meta); library(logistf) # Required for Firth regression
@@ -7,24 +8,12 @@ suppressPackageStartupMessages({
 
 # ----------------------------- CLI -----------------------------
 option_list <- list(
-  make_option("--llf_pheno",      type="character", help="llf_1290_phe.tsv"),
-  make_option("--llf_vi_promax",   type="character", help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
-  make_option("--llf_hu_fl",   type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--llf_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LLF.tsv"),
-  make_option("--llf_hu_bin",   type="character", help="human_fl_bin_MGBB-LLF.tsv"),
-  make_option("--rep_llf",   type="character", help="hsv_bin_fchange_rep_llf.tsv"),
-  make_option("--llf_dx_count",   type="character", help="llf_case_counts_filtered.csv"),
-  make_option("--lec_pheno",   type="character", help="lec_763_phe.tsv"),
-  make_option("--lec_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LEC.tsv"),
-  make_option("--lec_hu_bin",   type="character", help="human_fl_bin_MGBB-LEC.tsv"),
-  make_option("--abc_vi_promax",   type="character", help="IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
-  make_option("--abc_hu_fl",   type="character", help="IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--leo_vi_promax",   type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
-  make_option("--leo_hu_fl",   type="character", help="IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
-  make_option("--rep_lec",   type="character", help="hsv_bin_fchange_rep_lec.tsv"),
-  make_option("--lec_dx_count",   type="character", help="lec_case_counts_filtered.csv"),
-  make_option("--sig_ab",   type="character", help="lec_test_auc_summary_sig.csv"),
-  make_option("--out_dir",  type="character", default="results/Disease", help="Output dir")
+  make_option("--phe",      type="character", help="llf_1289_phe.tsv"),
+  make_option("--vi_bin",   type="character", help="hsv_proteins_binary.tsv"),
+  make_option("--hu_bin",   type="character", help="human_fl_binary.tsv"),
+  make_option("--dx_count", type="character",
+              help="a directory containing prevalence/incidence files"),
+  make_option("--out_dir",  type="character", default="results/Dx_pre", help="Output dir")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
@@ -53,7 +42,7 @@ run_glm_human <- function(ii, cohort_name, input_dt) {
   
   if (cohort_name=='llf'){
     covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + ics_trim_totnum_5y + cci"
-  } else {covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + cci"}
+  } else {covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + cci + cohort"}
   
   ## ---------- 2. Per-Protein Loop -----------------------------------------
   glm_results <- lapply(seq_along(hu_var), function(j) {
@@ -185,22 +174,22 @@ llf_hu_fl <- fread(opt$llf_hu_fl)
 if (!"var_id" %in% names(llf_hu_fl)) llf_hu_fl[, var_id := paste0("h", seq_len(.N))]
 
 # Select subjects and Merge
-sample_lists = llf_phe1$Sample_ID
-llf.fl = subset(llf_hu_fl, select = sample_lists) #1290 subjects
+sample_lists = llf_phe1$Sample_Id
+llf.fl = subset(llf_hu_fl, select = sample_lists) #1289 subjects
 llf.fl[llf.fl==1] <- 0
 
 llf.fl1 = as.data.frame(t(llf.fl))
 colnames(llf.fl1) = llf_hu_fl$var_id
-llf.fl1$Sample_ID = rownames(llf.fl1)
+llf.fl1$Sample_Id = rownames(llf.fl1)
 
 merge_dt_raw.llf <- llf_phe1 %>%
-  right_join(llf.fl1, by = "Sample_ID") %>%
+  right_join(llf.fl1, by = "Sample_Id") %>%
   as.data.table()
 
 # ----------------------------- Run GLMs -----------------------------
 # Human FL predictors (all antibodies)
 rep_llf = fread(opt$rep_llf)
-hu_var <- unique(rep_llf$antibody) #117
+hu_var <- unique(rep_llf$antibody) #93
 
 # ----------------------------- Disease cols -----------------------------
 dx_cols <- grep("_combine$", colnames(merge_dt_raw.llf), value = TRUE)
@@ -208,9 +197,12 @@ if (length(dx_cols) == 0) stop("No *_combine disease columns found. Did build_di
 
 # Keep diseases with at least 13 positives
 dx_sums <- colSums(merge_dt_raw.llf[, ..dx_cols], na.rm = TRUE)
-dx_list <- names(dx_sums[dx_sums >= 12.9])
-ex_list <- c(default="AIDS","Depression","HepatitisB","HepatitisC","Migraine","Opioid_use_disorder","Headache","Asthma","Chronic_viral_hepatitis")
-dx_list <- setdiff(dx_list, paste0(ex_list,"_combine")) # 62 diseases
+dx_list <- names(dx_sums[dx_sums >= 12.89])
+ex_list <- c(default="Depression","Opioid_use_disorder","Alcoholism","toothache","sciatica","Psychosis","loose_tooth",
+             "Asthma","Headache","Migraine","Post_Traumatic_Stress_Disorder","Bipolar_Disorder","Female_Infertility","Male_Infertility",
+             "Chronic viral hepatitis","Schizophrenia","Chronic_viral_hepatitis","Other_chronic_heptitis","Alcohol_liver_disease","Hiatus_Hernia",
+             "Diverticular","Cataract","Presbyopia","Mouth_ulcer")
+dx_list <- setdiff(dx_list, paste0(ex_list,"_combine")) # 73 diseases
 dx_list <- gsub("_combine", "", dx_list)
 dx_list <- paste0(dx_list,"_at_collect")
 
@@ -257,7 +249,7 @@ lapply(1:length(dx_list), run_glm_human, cohort_name = "lec", input_dt = merge_d
 # ----------------------------- IO in Pooled LLF-LEC------------------------------
 common_names = intersect(colnames(merge_dt_raw.lec), colnames(merge_dt_raw.llf))
 
-merge_dt_raw.all = rbind(merge_dt_raw.llf[, ..common_names], merge_dt_raw.lec[, ..common_names]) #2053
+merge_dt_raw.all = rbind(merge_dt_raw.llf[, ..common_names], merge_dt_raw.lec[, ..common_names]) #2052 subjects
 
 dx_test <- colSums(merge_dt_raw.all[, ..dx_list], na.rm = TRUE)
 length(dx_test)==length(dx_list)
@@ -290,5 +282,124 @@ res_wide$p.adj_llf = p.adjust(res_wide$P_llf, method='fdr')
 fwrite(res_wide,
        file.path(opt$out_dir, "rep_hu_dx_all_pre_glmf_ann.tsv"),
        sep = "\t", quote = FALSE)
-                        
-message("Done. Outputs in: ", opt$out_dir)
+
+res_wide = fread(file.path(opt$out_dir, "rep_hu_dx_all_pre_glmf_ann.tsv"), head=T)
+
+# Classify Significance
+res_wide[, Sig_Status := fcase(
+  P_lec < 0.05 & P_llf < 0.05, "Both Significant",
+  P_lec < 0.05,                "MGBB-LEC Only",
+  P_llf < 0.05,                "MGBB-LLF Only",
+  default =                    "Not Significant"
+)]
+
+# Plot
+cutoff_p <- {
+  sig_idx <- which(res_wide$p.adj_all < 0.05)
+  if (length(sig_idx)) max(res_wide$P_all[sig_idx], na.rm = TRUE) else NULL
+} # [1] 4.032627e-05
+
+p.all <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
+  facet_grid(. ~ Category, scales = "free_x") +
+  geom_point(aes(color = OR_all), size = 2) +
+  scale_color_gradient2(low = "#2b83ba", mid = "#FFFFB3", high = "#d7191c",
+                        midpoint = 1, limits = c(0, 2), oob = scales::squish) +
+  geom_hline(yintercept = -log10(cutoff_p), color = "black", linetype = "dashed") +
+  geom_hline(yintercept = -log10(0.05), color = "black", linetype = "solid") +
+  labs(title = 'The Replicated Human Autoantigens for Prevalent Diseases',
+       y = expression('-log'[10]*'('*italic(P)*'-value)'),
+       color = "OR") +
+  theme_bw() +
+  theme(
+    panel.border  = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.text  = element_text(size = 8),
+    plot.title   = element_text(hjust = 0.5, size = 11),
+    strip.text.x = element_text(size = 10),
+    axis.title.x = element_text(size = 10),
+    axis.text.x  = element_text(angle = 70, hjust = 1, size = 7),
+    axis.text.y  = element_text(size = 10),
+    axis.title.y = element_text(size = 10)
+  )
+
+p.all <- p.all + ggrepel::geom_label_repel(
+  data = subset(res_wide, P_all < 5e-04),
+  aes(label = gene_symbol),
+  size = 2, segment.size = 0.1, direction = "both",
+  segment.color = 'black', max.overlaps = 20
+)
+
+ggsave(file.path(opt$out_dir, "figure5_or_pre_all.png"), p.all, width = 12, height = 7, dpi = 300, bg='white')
+
+# OR significance comparison
+p.or <- ggplot(res_wide, aes(x = disease, y = -log10(P_all))) +
+  facet_grid(. ~ Category, scales = "free_x") +
+  geom_point(aes(color = Sig_Status), size = 2) +
+  scale_color_manual(values = c("Both Significant" = "red", 
+                                "MGBB-LEC Only" = "blue", 
+                                "MGBB-LLF Only" = "green", 
+                                "Not Significant" = "grey80")) +
+  geom_hline(yintercept = -log10(cutoff_p), color = "black", linetype = "dashed") +
+  geom_hline(yintercept = -log10(0.05), color = "black", linetype = "solid") +
+  labs(title = 'The Replicated Human Autoantigens for Prevalent Diseases',
+       y = expression('-log'[10]*'('*italic(P)*'-value)'),
+       color = "OR") +
+  theme_bw() +
+  theme(
+    panel.border  = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.text  = element_text(size = 8),
+    plot.title   = element_text(hjust = 0.5, size = 11),
+    strip.text.x = element_text(size = 10),
+    axis.title.x = element_text(size = 10),
+    axis.text.x  = element_text(angle = 70, hjust = 1, size = 7),
+    axis.text.y  = element_text(size = 10),
+    axis.title.y = element_text(size = 10)
+  )
+
+p.or <- p.or + ggrepel::geom_label_repel(
+  data = subset(res_wide, P_all < 5e-04),
+  aes(label = gene_symbol),
+  size = 2, segment.size = 0.1, direction = "both",
+  segment.color = 'black', max.overlaps = 20
+)
+ggsave(file.path(opt$out_dir, "figure5_or_comparison_glm_all.png"), p.or, width = 12, height = 7, dpi = 300, bg='white')
+
+# Beta comparison Plot
+p.beta = ggplot(res_wide, aes(x = Beta_lec, y = Beta_llf, color = Sig_Status)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dotted") + # Perfect replication line
+  geom_point(alpha = 0.7, size = 2) +
+  scale_color_manual(values = c("Both Significant" = "red", 
+                                "MGBB-LEC Only" = "blue", 
+                                "MGBB-LLF Only" = "green", 
+                                "Not Significant" = "grey80")) +
+  theme_minimal() +
+  labs(title = "Cohort comparison between MGBB-LLF and MGBB-LEC in Prevalent diseases",
+       subtitle = "Checking for consistency of effect direction",
+       x = "Effect Size (MGBB-LEC)", 
+       y = "Effect Size (MGBB-LLF)") +
+  theme(
+    panel.border  = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.text  = element_text(size = 10),
+    plot.title   = element_text(size = 12),
+    axis.title.x = element_text(size = 10),
+    axis.text.x  = element_text(size = 8),
+    axis.text.y  = element_text(size = 10),
+    axis.title.y = element_text(size = 10)
+  ) +
+  # Optional: Label only the top significant hits to avoid clutter
+  ggrepel::geom_label_repel(data = res_wide[Sig_Status == "Both Significant"], 
+                            aes(label = paste(disease, gene_symbol, sep="-")),
+                            size = 3, segment.size = 0.1, direction = "both",
+                            segment.color = 'black', max.overlaps = 20)
+
+ggsave(file.path(opt$out_dir, "figure5_beta_glm_all.png"), p.beta, width = 12, height = 10, dpi = 300, bg='white')
