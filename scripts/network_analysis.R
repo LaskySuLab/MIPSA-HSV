@@ -1,8 +1,5 @@
 #!/usr/bin/env Rscript
 # Tripartite network plots: Virus -> Auto-Ab -> Disease
-
-#!/usr/bin/env Rscript
-# Tripartite network plots: Virus -> Auto-Ab -> Disease
 # Layout: Concentric Layers (Center=Virus, Middle=Auto-Ag, Outer=Disease)
 
 suppressPackageStartupMessages({
@@ -41,8 +38,7 @@ human_dx.inc <- fread(opt$human_dx_inc)
 virus_dx.inc <- fread(opt$virus_dx_inc)
 human_dx.pre <- fread(opt$human_dx_pre)
 virus_dx.pre <- fread(opt$virus_dx_pre)
-human_dx.com <- fread(opt$human_dx_com)
-virus_dx.com <- fread(opt$virus_dx_com)
+
 human_lab <- fread(opt$human_lab)
 virus_lab <- fread(opt$virus_lab)
 sig_ab       <- fread(opt$sig_ab)
@@ -50,15 +46,20 @@ sig_ab       <- fread(opt$sig_ab)
 # Apply Label Mapping
 virus_dx.inc$taxon_species <- species_label_map(virus_dx.inc$taxon_species)
 virus_dx.pre$taxon_species <- species_label_map(virus_dx.pre$taxon_species)
-virus_dx.com$taxon_species <- species_label_map(virus_dx.com$taxon_species)
+
 virus_lab$taxon_species <- species_label_map(virus_lab$taxon_species)
 sig_ab$taxon_species       <- species_label_map(sig_ab$taxon_species)
 
 human_dx.inc$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  human_dx.inc$gene_symbol)
 human_dx.pre$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  human_dx.pre$gene_symbol)
-human_dx.com$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  human_dx.com$gene_symbol)
-human_lab$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  human_lab$gene_symbol)
+human_dx.inc$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3",  human_dx.inc$gene_symbol)
+human_dx.pre$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3",  human_dx.pre$gene_symbol)
+
 sig_ab$gene_symbol       <- gsub(" \\s*\\([^\\)]+\\)", "",  sig_ab$gene_symbol)
+sig_ab$gene_symbol       <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3",  sig_ab$gene_symbol)
+
+human_lab$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  human_lab$gene_symbol)
+
 
 # 3. Core Plotting Function for diseases
 # ----------------------
@@ -186,7 +187,6 @@ run_network_analysis <- function(target_virus, outcome_type, human_dx, virus_dx,
   dis_subset <- nodes_plot %>% filter(ntype == "Disease")
   if(nrow(dis_subset) > 0) {
     dis_df <- dis_subset %>% left_join(dx_lookup, by = c("name" = "Disease")) %>%
-      mutate(Category = replace_na(Category, "Other")) %>%
       arrange(Category, name)
     
     dis_df$cat_id <- as.numeric(factor(dis_df$Category, levels=unique(dis_df$Category)))
@@ -532,9 +532,9 @@ all_viruses <- unique(sig_ab$taxon_species)
 cat(sprintf("Found %d virus species to process.\n", length(all_viruses)))
 
 for (virus in all_viruses) {
-  # try({ run_network_analysis(virus, "Incidence", human_dx.inc, virus_dx.inc, sig_ab) })
-  # try({ run_network_analysis(virus, "Prevalence", human_dx.pre, virus_dx.pre, sig_ab) })
-  try({ run_network_analysis(virus, "Incidence+Prevalence", human_dx.com, virus_dx.com, sig_ab) })
+  try({ run_network_analysis(virus, "Incidence", human_dx.inc, virus_dx.inc, sig_ab) })
+  try({ run_network_analysis(virus, "Prevalence", human_dx.pre, virus_dx.pre, sig_ab) })
+  # try({ run_network_analysis(virus, "Incidence+Prevalence", human_dx.com, virus_dx.com, sig_ab) })
 }
 
 for (virus in all_viruses) {
