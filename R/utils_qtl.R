@@ -37,7 +37,7 @@ recode_covariates <- function(dt) {
   dt[, Smoking_flag := Smoking_flag_Biobank]
   dt[is.na(Smoking_flag), Smoking_flag := Smoking_RPDR_most_recent]
   dt[is.na(Smoking_flag), Smoking_flag := "Unknown"]
-
+  
   # Alcohol
   alcohol.2 <- c("Current-drinker", "Former-drinker")
   noalcohol <- " 1. None, or less than 1 per month "
@@ -49,7 +49,7 @@ recode_covariates <- function(dt) {
   dt[, Alcohol_flag := Alcohol_flag_Biobank]
   dt[is.na(Alcohol_flag), Alcohol_flag := Alcohol_RPDR_most_recent]
   dt[is.na(Alcohol_flag), Alcohol_flag := "Unknown"]
-
+  
   dt[, Smoking := ifelse(Smoking_flag %in% c("Current/Former-smoker"), 1L, 0L)]
   dt[, Alcohol := ifelse(Alcohol_flag %in% c("Current/Former-drinker"), 1L, 0L)]
   dt[]
