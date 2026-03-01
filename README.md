@@ -14,7 +14,7 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 ## Repro order (discovery → replication → prediction → disease association)
 ### Statistics for diseases in the cohorts (Figure 1)
 Rscript scripts/disease_counts.R \
-  --llf_phe Data/llf_1290_phe.tsv \
+  --llf_phe Data/llf_1289_phe.tsv \
   --lec_phe Data/lec_763_phe.tsv \
   --out_dir results/Figure1 \
  \
@@ -34,7 +34,7 @@ Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
   --virsight_promax.llf Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --husight_fl.llf Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --pheno.llf Data/llf_1290_phe.tsv \
+  --pheno.llf Data/llf_1289_phe.tsv \
   --out_dir Data \
  \
 2) LEC cohort
@@ -51,7 +51,7 @@ Rscript scripts/build_binary_matrices.R \
 Rscript scripts/pairwise_glm.R \
 1) LLF cohort
 Rscript scripts/run_hu_vs_hsv_glm.R \
-  --llf_phe Data/llf_1290_phe.tsv \
+  --llf_phe Data/llf_1289_phe.tsv \
   --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin Data/hsv_promax_bin_MGBB-LLF.tsv \
@@ -101,7 +101,7 @@ Rscript scripts/Dx_prevalent_glm_vi_all.R \
 Rscript scripts/Dx_incident_cox_hu_all.R \
 Rscript scripts/Dx_incident_cox_hu_all.R \
 
-  --llf_pheno Data/llf_1290_phe.tsv \
+  --llf_pheno Data/llf_1289_phe.tsv \
   --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin Data/hsv_promax_bin_MGBB-LLF.tsv \
