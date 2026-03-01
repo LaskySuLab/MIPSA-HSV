@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(glmnet)
   library(pROC); library(ggplot2); library(ggrepel); library(scales)
@@ -39,7 +40,7 @@ rep_ab_tbl = unique(rep_hsv[,c('antibody','gene_symbol')])
 
 # Shared-subject join
 merge_train <- train_hu %>% right_join(train_vi, by="Subject_Id") %>% as.data.table()
-merge_test  <- test_hu  %>% right_join(test_vi,  by="Sample_Id") %>% as.data.table()
+merge_test  <- test_hu  %>% right_join(test_vi,  by="Subject_Id") %>% as.data.table()
 
 # virus species sets per short label
 species_sets <- lapply(species_list, function(sp) {
@@ -93,7 +94,7 @@ results_list.lec <- foreach(i = seq_len(nrow(species_sets))) %dopar% {
     # --- OPTIMIZATION B: Faster CV ---
     set.seed(123)
     cv_fit <- tryCatch(
-      cv.glmnet(train_x, train_y, family="binomial", alpha=1, nfolds=5),
+      cv.glmnet(train_x, train_y, family="binomial", alpha=1, nfolds=10),
       error = function(e) NULL
     )
     
@@ -147,6 +148,7 @@ auc_tab_df.lec1 <- auc_tab_df.lec %>%
   ungroup()
 auc_tab_df.lec1 = left_join(auc_tab_df.lec1, train_hu_anno[,c('var_id','UniProt_acc')], by=c('Antibody'='var_id'))
 auc_tab_df.lec1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  auc_tab_df.lec1$Gene)
+auc_tab_df.lec1$Gene <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", auc_tab_df.lec1$Gene)
 
 saveRDS(flat_results.lec, file = file.path(opt$out_dir, "lec_test_lasso.rds"))
 fwrite(roc_all_df.lec, file.path(opt$out_dir, "lec_test_roc_summary.csv"))
@@ -211,7 +213,7 @@ results_list.llf <- foreach(i = seq_len(nrow(species_sets))) %dopar% {
     # --- Lasso with Faster CV ---
     set.seed(123)
     cv_fit <- tryCatch(
-      cv.glmnet(train_x_mat, train_y_vec, family="binomial", alpha=1, nfolds=5),
+      cv.glmnet(train_x_mat, train_y_vec, family="binomial", alpha=1, nfolds=10),
       error = function(e) NULL
     )
     
@@ -264,6 +266,7 @@ auc_tab_df.llf1 <- auc_tab_df.llf %>%
   ungroup()
 auc_tab_df.llf1 = left_join(auc_tab_df.llf1, train_hu_anno[,c('var_id','UniProt_acc')], by=c('Antibody'='var_id'))
 auc_tab_df.llf1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  auc_tab_df.llf1$Gene)
+auc_tab_df.llf1$Gene <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", auc_tab_df.llf1$Gene)
 
 saveRDS(flat_results.llf, file = file.path(opt$out_dir, "llf_test_lasso.rds"))
 # flat_results.llf = readRDS(file = file.path(opt$out_dir, "llf_test_lasso.rds"))
@@ -271,7 +274,7 @@ saveRDS(flat_results.llf, file = file.path(opt$out_dir, "llf_test_lasso.rds"))
 fwrite(roc_all_df.llf, file.path(opt$out_dir, "llf_test_roc_summary.csv"))
 fwrite(auc_tab_df.llf, file.path(opt$out_dir, "llf_test_auc_summary.csv"))
 
-ab_tbl.llf = subset(auc_tab_df.llf[,c('Antibody', 'Gene', 'Virus','AUC')], auc_tab_df.llf$AUC > 0.80) #35
+ab_tbl.llf = subset(auc_tab_df.llf[,c('Antibody', 'Gene', 'Virus','AUC')], auc_tab_df.llf$AUC > 0.80) #28
 fwrite(ab_tbl.llf, file.path(opt$out_dir, "llf_test_auc_summary_sig.csv"))
 
 auc_merge = inner_join(auc_tab_df.lec1, auc_tab_df.llf, by=c('Antibody', 'Gene', 'Virus'))
@@ -356,6 +359,7 @@ for (ii in c(1:9)) {
     ungroup()
   
   subgroup1$Gene <- gsub(" \\s*\\([^\\)]+\\)", "",  subgroup1$Gene)
+  subgroup1$Gene <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", subgroup1$Gene)
   subgroup1 <- subgroup1[order(subgroup1$AUC, decreasing = F),]
   subgroup1$Gene <- factor(subgroup1$Gene, levels = subgroup1$Gene)
   
@@ -387,7 +391,7 @@ if (length(keep_abs) >= 2) {
   rownames(cor_mat) <- colnames(cor_mat)
   ragg::agg_png(
     file.path(opt$out_dir, "figure4F_correlation_llf.png"),
-    width = 3000, height = 3000, res = 300
+    width = 2100, height = 2100, res = 300
   )
   corrplot(cor_mat, method="color", type="upper", title = "", mar = c(0, 0, 2, 0),
            number.cex=0.7, tl.cex=1.0, tl.col="black", tl.srt=45, addCoef.col="black")
@@ -426,7 +430,7 @@ run_lasso_feature_analysis <- function(
   
   # 2) build train & test joined frames
   train_all <- train_hu %>% right_join(train_vi, by = "Subject_Id")
-  test_all  <- test_hu  %>% right_join(test_vi,  by = "Sample_Id")
+  test_all  <- test_hu  %>% right_join(test_vi,  by = "Subject_Id")
   
   needed_cols <- c(virus_pro, antibody_id)
   if (!all(needed_cols %in% colnames(train_all))) {
@@ -470,7 +474,7 @@ run_lasso_feature_analysis <- function(
   
   # 4) LASSO fit
   set.seed(123)
-  cv_fit <- cv.glmnet(X_train, y_train, family = "binomial", alpha = 1, nfolds = 5)
+  cv_fit <- cv.glmnet(X_train, y_train, family = "binomial", alpha = 1, nfolds = 10)
   best_lambda <- cv_fit$lambda.min
   
   # non-zero features at lambda.min
