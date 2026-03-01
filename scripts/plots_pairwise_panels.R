@@ -72,6 +72,8 @@ prevalence_virus <- function(vi_bin, vi_promax, N) {
 # diamond data (LLF/LEC variants)
 diamond_data_from_rep <- function(rep_dt) {
   rep_dt$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  rep_dt$gene_symbol)
+  rep_dt$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", rep_dt$gene_symbol)
+  
   dd <- rep_dt %>%
     mutate(log10_P = -log10(P.adj)) %>%
     group_by(taxon_genus, taxon_species, gene_symbol) %>%
@@ -167,6 +169,7 @@ plot_manhattan <- function(dt_collapse, title_txt, cutoff_p = NULL, lab_thresh, 
 # Circos / chord plot
 plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title_txt, outfile_png) {
   rep_summary$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  rep_summary$gene_symbol)
+  rep_summary$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", rep_summary$gene_symbol)
   
   chord_data <- rep_summary %>% rename(from = gene_symbol, to = taxon_species)
   chord_data$to <- species_label_map(chord_data$to)
@@ -198,7 +201,7 @@ plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title
     track.margin = c(0.05, 0.05)
   )
   
-  set.seed(123)
+  set.seed(2026)
   chordDiagram(
     x = chord_data[, c("from","to","association_count")],
     order = all_sectors,
@@ -299,6 +302,7 @@ plot_diamond(
 
 rep_lec = left_join(rep_lec, prev_genes_llf, by=c('gene_symbol'))
 dd_lec <- diamond_data_from_rep(rep_lec)
+
 # reorder LEC to match LLF gene order if overlapping
 if (nrow(dd_lec) > 0 && nrow(dd_llf) > 0) {
   dd_lec <- dd_lec %>%
@@ -326,6 +330,7 @@ rep_sum_llf <- rep_llf %>%
 rep_sum_llf$taxon_species <- species_label_map(rep_sum_llf$taxon_species)
 
 prev_genes_llf$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  prev_genes_llf$gene_symbol)
+prev_genes_llf$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3",  prev_genes_llf$gene_symbol)
 prev_genes_named_llf   <- setNames(prev_genes_llf$Prevalence, prev_genes_llf$gene_symbol)
 prev_species_named_llf <- setNames(prev_species_llf$Prevalence, prev_species_llf$taxon_species)
 
@@ -346,6 +351,7 @@ rep_sum_lec <- rep_lec %>%
 rep_sum_lec$taxon_species <- species_label_map(rep_sum_lec$taxon_species)
 
 prev_genes_lec$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  prev_genes_lec$gene_symbol)
+prev_genes_lec$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", prev_genes_lec$gene_symbol)
 prev_genes_named_lec   <- setNames(prev_genes_lec$Prevalence, prev_genes_lec$gene_symbol)
 prev_species_named_lec <- setNames(prev_species_lec$Prevalence, prev_species_lec$taxon_species)
 
@@ -399,3 +405,4 @@ plot_manhattan(
 )
 
 message("Figure 3 panels written to: ", normalizePath(opt$out_dir))
+
