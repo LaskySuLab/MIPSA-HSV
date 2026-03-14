@@ -1,0 +1,101 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Sequence Homology Analysis Pipeline\
+\
+This directory contains scripts for performing sequence homology\
+analysis between viral peptides and human peptide sequences using the\
+Smith\'96Waterman alignment algorithm implemented in EMBOSS water.\
+\
+The main script run_all_water_assoc.sh executes the full pipeline\
+automatically.\
+\
+  ----------------------\
+  Main Pipeline Script\
+  ----------------------\
+\
+run_all_water_assoc.sh\
+\
+Runs the complete sequence homology analysis pipeline, including both\
+observed alignments and null permutation-based alignments.\
+\
+Inputs\
+\
+viral_fl_sequences FASTA file containing full-length viral peptide\
+sequences from MIPSA that showed replicated associations (FDR < 0.05).\
+\
+human_peptide_seq FASTA file containing the human peptide sequence\
+corresponding to the association of interest.\
+\
+Outputs\
+\
+-   Alignment results between viral peptides and the human peptide\
+    sequence\
+-   Null distribution of alignment scores generated from randomized\
+    human sequences\
+\
+  ----------------\
+  Pipeline Steps\
+  ----------------\
+\
+The pipeline automatically runs the following scripts in order:\
+\
+1.  run_water_alignments_assoc.sh\
+\
+Runs pairwise sequence alignment using the Smith\'96Waterman algorithm via\
+EMBOSS water.\
+\
+Purpose: Compute observed alignment scores between\
+\
+Query: viral peptide sequences (viral_fl_sequences) Subject: human\
+peptide sequence (human_peptide_seq)\
+\
+Output: Pairwise alignment files and alignment scores for each\
+viral\'96human peptide pair.\
+\
+------------------------------------------------------------------------\
+\
+2.  create_random_seq.sh\
+\
+Generates randomized human peptide sequences to construct a null\
+distribution.\
+\
+Method: - Performs base-level permutations of the human peptide\
+sequence - Generates 1000 randomized sequences per peptide\
+\
+Purpose: Create a background distribution of alignment scores expected\
+by chance.\
+\
+------------------------------------------------------------------------\
+\
+3.  run_water_alignments_null_assoc.sh\
+\
+Runs Smith\'96Waterman alignments for the randomized sequences.\
+\
+Purpose: Align viral peptides against the 1000 permuted human sequences\
+to obtain a null distribution of alignment scores.\
+\
+Alignments performed:\
+\
+Query: viral peptide sequences (viral_fl_sequences) Subject: permuted\
+human peptide sequences\
+\
+Output: Alignment scores used to estimate the significance of the\
+observed alignments.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 ------------------------------------------------------------------------\
+\
+  ----------------------\
+  Table / Figure Script\
+  ----------------------\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+4. Seq_homology_figures.Rmd\
+Scripts for summarizing sequence homology results for all viral-human peptide pairs of interest (Supplementary Table S6)\
+\
+Visualizations for observed vs. null alignment results (Figure 5)}
