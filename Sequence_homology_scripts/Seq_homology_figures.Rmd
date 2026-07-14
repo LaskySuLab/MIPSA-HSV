@@ -1,7 +1,7 @@
 ---
 title: "Seq_homology_figures"
 output: html_document
-date: "2026-01-18"
+date: "2026-07-14"
 ---
 
 ```{r setup, include=FALSE}
@@ -25,6 +25,13 @@ all_updated_peptides <- read_excel("./MIPSA_pairwise_analysis_llf_updated.xlsx",
 colnames(all_updated_peptides) <- all_updated_peptides[1,]
 all_updated_peptides <- all_updated_peptides[-1, 1:7 ]
 
+# # load the old excel file -- NOT USED
+# old_peptides <- read_xlsx("./MIPSA_pairwise_analysis_llf_lec.xlsx",
+#                      sheet = "SupTable3.Replicated_FDR", col_names = FALSE)
+# old_peptides <- old_peptides[-1 ,1:7]
+# colnames(old_peptides) <- old_peptides[1,]
+# old_peptides <- old_peptides[-1,]
+
 ```
 
 
@@ -43,6 +50,12 @@ plotNullvsObs <- function(alignment_obs, alignment_null, title = ""){
     ## distribution
     geom_violin(aes(fill = group),
                 trim = FALSE, alpha = 0.4, color = NA) +
+
+    ## scatter (individual alignments)
+    # geom_jitter(aes(color = group),
+    #             width = 0.15, size = 1.8, alpha = 0.6) +
+    # geom_density(aes(fill = group), alpha = 0.4, 
+    #               linewidth = 0.3) + 
     
     labs(y = "Alignment Score", x = "", title = title) +
     theme_minimal(base_size = 14) +
@@ -149,7 +162,7 @@ alignment_metrics_summary <- function(alignment_summary){
 
 # CFHR1 vs. CMV
 ```{r}
-# 89 peptides in total
+# 107 peptides in total
 alignment_dir <- "./CFHR1_CMV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_CFHR1 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -167,38 +180,25 @@ plotNullvsObs(alignment_summary_assoc_CFHR1, alignment_summary_assoc_CFHR1_null,
 alignment_dir <- "./DNAJC12_CMV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_DNAJC12 <- do.call(rbind, lapply(files, extract_water_alignment_info))
-# 213 total
+# 233 total
 
 alignment_dir <- "./DNAJC12_CMV/water_alignments_randomized_null_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_DNAJC12_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
-alignment_summary_assoc_DNAJC12_null <- alignment_summary_assoc_DNAJC12_null |>
-  mutate(query_num = as.numeric(str_match(file, "query_(\\d+)_")[,2])) |>
-  filter(query_num >= 1 & query_num <= 213)
-# 213000 in total
+alignment_summary_assoc_DNAJC12_null <- alignment_summary_assoc_DNAJC12_null # |>
+  # mutate(query_num = as.numeric(str_match(file, "query_(\\d+)_")[,2])) |>
+  # filter(query_num >= 1 & query_num <= 213)
+# 233000 in total
 
 plotNullvsObs(alignment_summary_assoc_DNAJC12, alignment_summary_assoc_DNAJC12_null,
               title = "CMV peptide alignments against DNAJC12")
 ```
 
-# LY9 vs. CMV
-```{r}
-# 3 peptides in total
-alignment_dir <- "./LY9_CMV/water_alignments_assoc/"
-files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
-alignment_summary_assoc_LY9 <- do.call(rbind, lapply(files, extract_water_alignment_info))
-
-alignment_dir <- "./LY9_CMV/water_alignments_randomized_null_assoc/"
-files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
-alignment_summary_assoc_LY9_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
-plotNullvsObs(alignment_summary_assoc_LY9, alignment_summary_assoc_LY9_null,
-              title = "CMV peptide alignments against LY9")
-```
 
 
 # HEXIM2 vc. CMV
 ```{r}
-# 77 peptides in total
+# 121 peptides in total
 alignment_dir <- "./HEXIM2_CMV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_HEXIM2 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -213,7 +213,7 @@ plotNullvsObs(alignment_summary_assoc_HEXIM2, alignment_summary_assoc_HEXIM2_nul
 
 # IQCB1 vs. CMV
 ```{r}
-# 205 peptides in total
+# 217 peptides in total
 alignment_dir <- "./IQCB1_CMV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_IQCB1 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -228,31 +228,19 @@ plotNullvsObs(alignment_summary_assoc_IQCB1, alignment_summary_assoc_IQCB1_null,
 
 # R3HDM2 vc. CMV
 ```{r}
-# 34 peptides in total
+#36 peptides in total
 alignment_dir <- "./R3HDM2_CMV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_R3HDM2<- do.call(rbind, lapply(files, extract_water_alignment_info))
 
 alignment_dir <- "./R3HDM2_CMV/water_alignments_randomized_null_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
-alignment_summary_assoc_R3HDM2_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
+alignment_summary_assoc_R3HDM2_null <- do.call(rbind, lapply(files, extract_water_alignment_info)) 
 plotNullvsObs(alignment_summary_assoc_R3HDM2, alignment_summary_assoc_R3HDM2_null,
               title = "CMV peptide alignments against R3HDM2")
 ```
 
-# SLC30A4 vc. CMV
-```{r}
-# 97 peptides in total
-alignment_dir <- "./SLC30A4_CMV/water_alignments_assoc/"
-files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
-alignment_summary_assoc_SLC30A4<- do.call(rbind, lapply(files, extract_water_alignment_info))
 
-alignment_dir <- "./SLC30A4_CMV/water_alignments_randomized_null_assoc/"
-files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
-alignment_summary_assoc_SLC30A4_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
-plotNullvsObs(alignment_summary_assoc_SLC30A4, alignment_summary_assoc_SLC30A4_null,
-              title = "CMV peptide alignments against SLC30A4")
-```
 
 # ZNF550 vs. CMV
 ```{r}
@@ -269,7 +257,7 @@ plotNullvsObs(alignment_summary_assoc_ZNF550, alignment_summary_assoc_ZNF550_nul
 
 # KCNMB3 vs. EBV
 ```{r}
-# 8 peptides total
+# 37 peptides total
 alignment_dir <- "./KCNMB3_EBV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_KCNMB3 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -280,10 +268,38 @@ alignment_summary_assoc_KCNMB3_null <- do.call(rbind, lapply(files, extract_wate
 plotNullvsObs(alignment_summary_assoc_KCNMB3, alignment_summary_assoc_KCNMB3_null,
               title = "EBV peptide alignments against KCNMB3")
 ```
+# ANKRD16 vs. CMV
+```{r}
+#4 peptides total
+alignment_dir <- "./ANKRD16_CMV/water_alignments_assoc/"
+files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
+alignment_summary_assoc_ANKRD16 <- do.call(rbind, lapply(files, extract_water_alignment_info))
+
+alignment_dir <- "./ANKRD16_CMV/water_alignments_randomized_null_assoc/"
+files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
+alignment_summary_assoc_ANKRD16_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
+plotNullvsObs(alignment_summary_assoc_ANKRD16, alignment_summary_assoc_ANKRD16_null,
+              title = "EBV peptide alignments against ANKRD16")
+```
+
+
+# SLC30A4 vc. CMV
+```{r}
+# 131 peptides in total
+alignment_dir <- "./SLC30A4_CMV/water_alignments_assoc/"
+files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
+alignment_summary_assoc_SLC30A4<- do.call(rbind, lapply(files, extract_water_alignment_info))
+
+alignment_dir <- "./SLC30A4_CMV/water_alignments_randomized_null_assoc/"
+files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
+alignment_summary_assoc_SLC30A4_null <- do.call(rbind, lapply(files, extract_water_alignment_info))
+plotNullvsObs(alignment_summary_assoc_SLC30A4, alignment_summary_assoc_SLC30A4_null,
+              title = "CMV peptide alignments against SLC30A4")
+```
 
 # PSMB6 vs. EBV
 ```{r}
-# 1 peptide in total
+# 2 peptides in total
 alignment_dir <- "./PSMB6_EBV/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_PSMB6 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -335,7 +351,7 @@ plotNullvsObs(alignment_summary_assoc_PSMB6, alignment_summary_assoc_PSMB6_null,
 
 # PHLDA1 vs. HSV1
 ```{r}
-# 232 peptides in total
+# 255 peptides in total
 alignment_dir <- "./PHLDA1_HSV1/water_alignments_assoc/"
 files <- list.files(alignment_dir, pattern = "\\.txt$", full.names = TRUE)
 alignment_summary_assoc_phlda1 <- do.call(rbind, lapply(files, extract_water_alignment_info))
@@ -354,7 +370,7 @@ prop_in_null <- function(null, obs, name){
   pct <- ecdf(null$score)(obs$score)
   ct <- sum(pct > 0.95)
   prop <- sum(pct > 0.95)/length(pct)
-  num_sig_association = nrow(obs)
+  num_pep_associated = nrow(obs)
   if(ct == 0){
     range_quantile_tophits <- NA
   }else{
@@ -363,7 +379,7 @@ prop_in_null <- function(null, obs, name){
   }
   prop <- cbind(alignment = name, 
                 count_95_null = ct,
-                num_sig_association = num_sig_association,
+                num_pep_associated = num_pep_associated,
                 prop_95_null = prop,
                 range_quantile_tophits = range_quantile_tophits)
   return(as.data.frame(prop))
@@ -372,33 +388,35 @@ prop_in_null <- function(null, obs, name){
 prop_total <- rbind(
 prop_in_null( alignment_summary_assoc_CFHR1_null, alignment_summary_assoc_CFHR1, "CMV_CFHR1"),
 prop_in_null( alignment_summary_assoc_DNAJC12_null, alignment_summary_assoc_DNAJC12, "CMV_DNAJC12"),
-prop_in_null( alignment_summary_assoc_GABRE1_null, alignment_summary_assoc_GABRE1, "CMV_IQCB1"),
+prop_in_null( alignment_summary_assoc_IQCB1_null, alignment_summary_assoc_IQCB1, "CMV_IQCB1"),
 prop_in_null( alignment_summary_assoc_HEXIM2_null, alignment_summary_assoc_HEXIM2, "CMV_HEXIM2"),
-prop_in_null(alignment_summary_assoc_LY9_null, alignment_summary_assoc_LY9, "CMV_LY9"),
+prop_in_null(alignment_summary_assoc_ANKRD16_null, alignment_summary_assoc_ANKRD16, "CMV_ANKRD"),
 prop_in_null( alignment_summary_assoc_R3HDM2_null, alignment_summary_assoc_R3HDM2, "CMV_R3HDM2"),
 prop_in_null( alignment_summary_assoc_SLC30A4_null, alignment_summary_assoc_SLC30A4, "CMV_SLC30A4"),
 prop_in_null( alignment_summary_assoc_ZNF550_null, alignment_summary_assoc_ZNF550, "CMV_ZNF550"),
 prop_in_null( alignment_summary_assoc_KCNMB3_null, alignment_summary_assoc_KCNMB3, "EBV_KCNMB3"),
-prop_in_null( alignment_summary_assoc_P3H4_null, alignment_summary_assoc_PSMB6, "EBV_PSMB6"),
+prop_in_null( alignment_summary_assoc_PSMB6_null, alignment_summary_assoc_PSMB6, "EBV_PSMB6"),
 prop_in_null( alignment_summary_assoc_phlda1_null, alignment_summary_assoc_phlda1, "HSV1_PHLDA1")
 )
 
 prop_total
+
 ```
 
 
 ```{r}
 
-alignment_summaries_all_peptides <- do.call(rbind, lapply(list(                       alignment_summary_assoc_CFHR1,
+alignment_summaries_all_peptides <- do.call(rbind, lapply(list(                 
+                                                              alignment_summary_assoc_CFHR1,
                                                                alignment_summary_assoc_DNAJC12,
                                                                alignment_summary_assoc_IQCB1,
                                                                alignment_summary_assoc_HEXIM2,
+                                                              alignment_summary_assoc_ANKRD16,
                                                             alignment_summary_assoc_R3HDM2,
-                                                            alignment_summary_assoc_LY9,
-                                                               alignment_summary_assoc_SLC30A4,
+                                                            alignment_summary_assoc_SLC30A4,
                                                                alignment_summary_assoc_ZNF550,
                                                                alignment_summary_assoc_KCNMB3,
-                                                            alignment_summary_assoc_PSMB6,                                   
+                                                            alignment_summary_assoc_PSMB6,                  
                                                                alignment_summary_assoc_phlda1), 
                                                           alignment_metrics_summary))
 
@@ -407,7 +425,7 @@ alignment_summaries_all_peptides <- alignment_summaries_all_peptides |>
   select(-c("subject_id"))
 
 alignment_summaries_all_peptides
-write.csv(alignment_summaries_all_peptides, "./alignment_summaries_all_peptides_UPDATED.csv")
+write.csv(alignment_summaries_all_peptides, "./alignment_summaries_all_peptides_final_260713.csv")
 alignment_summaries_all_peptides
 ```
 
