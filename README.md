@@ -94,25 +94,25 @@ Rscript scripts/Dx_prevalent_glm_vi_all.R \
 Rscript scripts/Dx_incident_cox_hu_all.R \
 Rscript scripts/Dx_incident_cox_hu_all.R \
 
---llf_pheno = Data/llf_1290_phe1.tsv
---llf_vi_promax = Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv
---llf_hu_fl = Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv
---llf_vi_bin = Data/hsv_promax_bin_MGBB-LLF.tsv
---llf_hu_bin = Data/human_fl_bin_MGBB-LLF.tsv
---rep_llf = results1/Run/hsv_bin_fchange_rep_llf.tsv
---llf_dx_count = results1/Figure1/llf_case_counts_filtered.csv
-
---lec_pheno = Data/lec_763_phe1.tsv
---lec_vi_bin = Data/hsv_promax_bin_MGBB-LEC.tsv
---lec_hu_bin = Data/human_fl_bin_MGBB-LEC.tsv
---abc_vi_promax = Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv
---abc_hu_fl = Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv
---leo_vi_promax = Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv
---leo_hu_fl = Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv
---rep_lec = results1/Run/hsv_bin_fchange_rep_lec.tsv
---lec_dx_count = results1/Figure1/lec_case_counts_filtered.csv
---sig_ab = results1/Figure4/lec_test_auc_summary_sig.csv
---out_dir results1/Dx_pre
+--llf_pheno = Data/llf_1290_phe1.tsv \
+--llf_vi_promax = Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--llf_hu_fl = Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--llf_vi_bin = Data/hsv_promax_bin_MGBB-LLF.tsv \
+--llf_hu_bin = Data/human_fl_bin_MGBB-LLF.tsv \
+--rep_llf = results1/Run/hsv_bin_fchange_rep_llf.tsv \
+--llf_dx_count = results1/Figure1/llf_case_counts_filtered.csv \
+ \
+--lec_pheno = Data/lec_763_phe1.tsv \
+--lec_vi_bin = Data/hsv_promax_bin_MGBB-LEC.tsv \
+--lec_hu_bin = Data/human_fl_bin_MGBB-LEC.tsv \
+--abc_vi_promax = Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--abc_hu_fl = Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--leo_vi_promax = Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background-HSV.tsv \
+--leo_hu_fl = Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv \
+--rep_lec = results1/Run/hsv_bin_fchange_rep_lec.tsv \
+--lec_dx_count = results1/Figure1/lec_case_counts_filtered.csv \
+--sig_ab = results1/Figure4/lec_test_auc_summary_sig.csv \
+--out_dir results1/Dx_pre \
  \
 ### Network plots (Figure 5)
 Rscript scripts/network_analysis.R \
