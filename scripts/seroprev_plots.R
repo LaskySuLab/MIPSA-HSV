@@ -1,4 +1,10 @@
 #!/usr/bin/env Rscript
+# Figure 2 panels: Ridgeplots for viral peptides across HSV viral species and (LLF/LEC), and Human autoantigens (LLF/LEC)
+
+#  Figure2A seroprev_herpes_promax_ridgeplot_llf.png
+#  Figure2B seroprev_herpes_promax_ridgeplot_lec.png
+#  Figure2C seroprev_human_fl_ridgeplot_llf.png
+#  Figure2D seroprev_human_fl_ridgeplot_lec.png
 
 suppressPackageStartupMessages({
   library(optparse)
@@ -21,7 +27,7 @@ opt_list <- list(
   make_option("--abc_fl", type="character", help="ABC HuSIGHT FullLength CSV"),
   make_option("--leo_promax", type="character", help="LEO VirSIGHT Promax CSV"),
   make_option("--leo_fl", type="character", help="LEO HuSIGHT FullLengthCSV"),
-  make_option("--out_dir", type="character", default="results/Figure2",
+  make_option("--out_dir", type="character", default="results1/Figure2",
               help="Output directory [default %default]"),
   make_option("--min_pep_prev", type="double", default=1,
               help="Minimum peptide prevalence (%) to show in ridgeline [default %default]")
