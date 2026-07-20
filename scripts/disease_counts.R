@@ -8,15 +8,15 @@ suppressPackageStartupMessages({
 opts <- list()
 opt_list <- list(
   make_option("--llf_phe", type="character",
-              help="LLF phenotype CSV (e.g., llf_1289_phe.tsv)"),
+              help="LLF phenotype CSV (e.g., llf_1289_phe1.tsv)"),
   make_option("--lec_phe", type="character",
-              help="LEC phenotype CSV (e.g., lec_763_phe.tsv)"),
+              help="LEC phenotype CSV (e.g., lec_763_phe1.tsv)"),
   make_option("--llf_exclude", type="character", default="Depression,Opioid_use_disorder,Alcoholism,toothache,sciatica,Psychosis,loose_tooth,
               Asthma,Headache,Migraine,Post_Traumatic_Stress_Disorder,Bipolar_Disorder,Female_Infertility,Male_Infertility,
-              Chronic viral hepatitis,Schizophrenia,Chronic_viral_hepatitis,Other_chronic_heptitis,Alcohol_liver_disease,Hiatus_Hernia,
-              Diverticular,Cataract,Presbyopia,Mouth_ulcer",
+              Schizophrenia,Chronic_viral_hepatitis,Other_chronic_heptitis,Alcohol_liver_disease,Hiatus_Hernia,
+              Diverticular,Cataract,Presbyopia,Mouth_ulcer,Lyme_Disease",
               help="Comma-separated disease base names to exclude (without suffix) for LLF"),
-  make_option("--out_dir", type="character", default="results/Figure1",
+  make_option("--out_dir", type="character", default="results1/Figure1",
               help="Output directory [default %default]"),
   make_option("--llf_min_total", type="double", default=1289*0.01,
               help="Min total cases (incident+prevalent) to display for LLF [default %default]")
@@ -155,3 +155,104 @@ capture.output(summary(lec$FU_years),
                file = file.path(opt$out_dir, "lec_fu_years_summary.txt"))
 
 message("Done. Wrote figures + tables to: ", normalizePath(opt$out_dir))
+
+#------------------------------------------------------------------------------#
+# Table 1
+n_llf
+# [1] 1289
+n_lec
+# [1] 763
+table(llf$Gender)
+# F   M 
+# 907 382 
+table(lec$Gender)
+# F   M 
+# 406 357 
+mean(llf$Age_at_collect);sd(llf$Age_at_collect)
+# [1] 58.44185
+# [1] 14.84713
+mean(lec$Age_at_collect);sd(lec$Age_at_collect)
+# [1] 55.11407
+# [1] 16.90126
+mean(llf$BMI_most_recent);sd(llf$BMI_most_recent)
+# [1] 30.48352
+# [1] 7.749385
+mean(lec$BMI_most_recent);sd(lec$BMI_most_recent)
+# [1] 30.48013
+# [1] 6.534815
+table(llf$decease_flag)
+# 0    1 
+# 1074  215 
+table(lec$decease_flag)
+# 0   1 
+# 579 184
+
+table(llf$Race_Group)
+# American Indian or Alaska Native                                     Asian                                     Black 
+# 3                                        18                                       109 
+# Declined Native Hawaiian or Other Pacific Islander                                     Other 
+# 6                                         1                                        76 
+# Two or More                           Unknown/Missing                                     White 
+# 14                                        13                                      1049 
+table(lec$Race_Group)
+# American Indian or Alaska Native                                     Asian                                     Black 
+# 3                                        11                                        75 
+# Declined Native Hawaiian or Other Pacific Islander                                     Other 
+# 8                                         1                                       101 
+# Two or More                           Unknown/Missing                                     White 
+# 5                                        14                                       545 
+
+table(llf$Ethnic_Group)
+# DECLINED        HISPANIC    Non Hispanic Unknown/Missing 
+# 47              22            1190              30 
+table(lec$Ethnic_Group)
+# DECLINED        HISPANIC    Non Hispanic Unknown/Missing 
+# 28              33             686              16 
+
+table(llf.1$Smoking_flag)
+# Current/Former-smoker            Non-smoker 
+# 564                   725 
+table(lec.1$Smoking_flag)
+# Current/Former-smoker            Non-smoker               Unknown 
+# 254                   505                     4 
+table(llf.1$Alcohol_flag)
+# Current/Former-drinker             No-alcohol 
+# 974                    315 
+table(lec.1$Alcohol_flag)
+# Current/Former-drinker             No-alcohol 
+# 640                    123  
+table(llf.1$cci)
+# 1   2   3   4   5   6   7 
+# 48  81 143 299 345 233 140 
+table(lec.1$cci)
+# 0   1   2   3   4   5   6   7 
+# 62  51  48  97 146 158 136  65 
+mean(llf$FU_years);sd(llf$FU_years)
+# [1] 8.596255
+# [1] 2.954672
+mean(lec$FU_years);sd(lec$FU_years)
+# [1] 7.856882
+# [1] 2.693484
+mean(llf.1$ics_trim_totnum_5y);sd(llf.1$ics_trim_totnum_5y)
+# [1] 17.89527
+# [1] 24.31274
+
+table(llf.1$rx_antiviral_24m)
+# 0    1 
+# 777 512
+table(lec.1$rx_antiviral_24m)
+# 0   1 
+# 525 238 
+table(llf.1$rx_antineoplastic_24m)
+# 0    1 
+# 987 302 
+table(lec.1$rx_antineoplastic_24m)
+# 0   1 
+# 609 154 
+table(llf.1$rx_immunosuppressant_24m)
+# 0    1 
+# 1055  234
+table(lec.1$rx_immunosuppressant_24m)
+# 0   1 
+# 680  83 
+
