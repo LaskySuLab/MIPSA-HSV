@@ -1,4 +1,19 @@
 #!/usr/bin/env Rscript
+# Figure 3 panels: Manhattan (LLF/LEC), Diamond (LLF/LEC), Circos (LLF/LEC)
+# Inputs expected from earlier steps (run_hu_vs_hsv_glm.R, build_binary_matrices.R)
+
+# Outputs (default to results/Figure3):
+#   figure3A_manhattan_llf.png
+#   figure3B_manhattan_lec.png
+#   figure3C_diamond_llf_fdr.png
+#   figure3D_diamond_lec_fdr.png
+#   figure3E_circos_llf_fdr.png
+#   figure3F_circos_lec_fdr.png
+
+# Notes:
+# - Species names are normalized (HSV-1/2, VZV, CMV, HHV-6A/B, HHV-7, EBV, HHV-8)
+# - Diamond plots use replicated set (LLF sig replicated in LEC)
+# - Circos uses replicated summary + prevalence labels on sectors
 
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(tidyr); library(forcats); library(ggplot2);
@@ -26,10 +41,10 @@ opt_list <- list(
   make_option("--rep_lec",      type="character", help="Replication rows in LEC (hsv_bin_fchange_rep_lec.tsv)"),
   
   # Figure output dir
-  make_option("--out_dir", type="character", default="results/Figure3", help="Output directory [default %default]"),
+  make_option("--out_dir", type="character", default="results1/Figure3", help="Output directory [default %default]"),
   
   # Extra plot params
-  make_option("--llf_n", type="integer", default=1290, help="LLF N for prevalence denominator [default %default]"),
+  make_option("--llf_n", type="integer", default=1289, help="LLF N for prevalence denominator [default %default]"),
   make_option("--lec_n", type="integer", default=763,  help="LEC N for prevalence denominator [default %default]")
 )
 opt <- parse_args(OptionParser(option_list = opt_list))
@@ -48,8 +63,6 @@ prevalence_human <- function(hu_bin, hu_fl, N) {
   df <- df %>% left_join(hu_fl[, c("gene_symbol", "UniProt_acc", "var_id")], by = c("fl.gene" = "var_id"))
   df$gene_symbol <- ifelse(is.na(df$gene_symbol), df$UniProt_acc, df$gene_symbol)
   df$prevalence <- df$count * 100 / N
-  df$gene_symbol <- ifelse(
-    grepl("^ZNF559-ZNF177,ZNF177", df$gene_symbol), "ZNF177", df$gene_symbol)
   df %>%
     group_by(gene_symbol) %>%
     summarise(Prevalence = max(prevalence, na.rm = TRUE), .groups = "drop")
@@ -73,6 +86,7 @@ prevalence_virus <- function(vi_bin, vi_promax, N) {
 diamond_data_from_rep <- function(rep_dt) {
   rep_dt$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  rep_dt$gene_symbol)
   rep_dt$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", rep_dt$gene_symbol)
+  rep_dt$gene_symbol <- gsub("ZNF559-ZNF177,ZNF177", "ZNF177", rep_dt$gene_symbol)
   
   dd <- rep_dt %>%
     mutate(log10_P = -log10(P.adj)) %>%
@@ -113,8 +127,10 @@ plot_diamond <- function(dd, title_txt, outfile, cap_size = 100, cap_color = 80,
       plot.title = element_text(hjust = 0.5, size = 13),
       axis.title.x = element_text(size = 11),
       axis.title.y = element_text(size = 11),
-      legend.text  = element_text(size = 9),
-      legend.title = element_text(size = 9)
+      legend.key.size = unit(0.4, "cm"),         # Shrinks the physical size of the legend keys (the diamonds)
+      legend.spacing.y = unit(0.1, "cm"),        # Shrinks vertical space between legend items
+      legend.text  = element_text(size = 8),     # Smaller legend text
+      legend.title = element_text(size = 8),     # Smaller legend title
     )
   ggsave(outfile, p, width = 13, height = 5, bg='white',dpi = 300)
 }
@@ -122,6 +138,8 @@ plot_diamond <- function(dd, title_txt, outfile, cap_size = 100, cap_color = 80,
 # Manhattan (facet by species, color by Beta, shape by direction)
 plot_manhattan <- function(dt_collapse, title_txt, cutoff_p = NULL, lab_thresh, outfile = "manhattan.png") {
   dt_collapse$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  dt_collapse$gene_symbol)
+  dt_collapse$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", dt_collapse$gene_symbol)
+  dt_collapse$gene_symbol <- gsub("ZNF559-ZNF177,ZNF177", "ZNF177", dt_collapse$gene_symbol)
   
   dt_collapse$taxon_species <- species_label_map(dt_collapse$taxon_species)
   dt_collapse$taxon_species <- factor(dt_collapse$taxon_species, levels = species_levels)
@@ -170,6 +188,7 @@ plot_manhattan <- function(dt_collapse, title_txt, cutoff_p = NULL, lab_thresh, 
 plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title_txt, outfile_png) {
   rep_summary$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  rep_summary$gene_symbol)
   rep_summary$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", rep_summary$gene_symbol)
+  rep_summary$gene_symbol <- gsub("ZNF559-ZNF177,ZNF177", "ZNF177", rep_summary$gene_symbol)
   
   chord_data <- rep_summary %>% rename(from = gene_symbol, to = taxon_species)
   chord_data$to <- species_label_map(chord_data$to)
@@ -196,11 +215,11 @@ plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title
   circos.clear()
   circos.par(
     start.degree = 90,
-    gap.after = c(rep(3, length(auto_list)-1), 12, rep(3, length(virus_list)-1), 12),
-    circle.margin = 0.3,
+    gap.after = c(rep(2, length(auto_list)-1), 3, rep(2, length(virus_list)-1), 3),
+    circle.margin = 0.5,
     track.margin = c(0.05, 0.05)
   )
-  
+
   set.seed(2026)
   chordDiagram(
     x = chord_data[, c("from","to","association_count")],
@@ -221,7 +240,7 @@ plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title
     sector.index <- get.cell.meta.data("sector.index")
     circos.text(CELL_META$xcenter, CELL_META$ylim[1] + 1.1, sector.index,
                 facing = 'clockwise', niceFacing = TRUE,
-                adj = c(0, 0.5), cex = 0.8, font = 2)
+                adj = c(0, 0.5), cex = 0.6, font = 2)
   }, bg.border = NA)
   
   # Legends
@@ -258,7 +277,7 @@ plot_circos <- function(rep_summary, prevalence_genes, prevalence_species, title
         CELL_META$xcenter, CELL_META$ylim[1] - 0.1,
         labels = format(round(prev_val, 2), nsmall = 2),
         facing = "reverse.clockwise", niceFacing = TRUE,
-        adj = c(0, 0.5), cex = 0.7, font = 3, col = "black"
+        adj = c(0, 0.5), cex = 0.5, font = 3, col = "black"
       )
     }
   }, bg.border = NA)
@@ -300,7 +319,7 @@ plot_diamond(
   cap_size  = 100, cap_color = 80, color_label = "-log10(FDR)"
 )
 
-rep_lec = left_join(rep_lec, prev_genes_llf, by=c('gene_symbol'))
+rep_lec = left_join(rep_lec, prev_genes_lec, by=c('gene_symbol'))
 dd_lec <- diamond_data_from_rep(rep_lec)
 
 # reorder LEC to match LLF gene order if overlapping
@@ -321,6 +340,7 @@ plot_diamond(
 )
 
 # ------------------------- CIRCOS (3D / 3F) -------------------------
+
 # LLF circos summary from replicated set
 rep_sum_llf <- rep_llf %>%
   group_by(taxon_species, gene_symbol) %>%
@@ -331,6 +351,7 @@ rep_sum_llf$taxon_species <- species_label_map(rep_sum_llf$taxon_species)
 
 prev_genes_llf$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  prev_genes_llf$gene_symbol)
 prev_genes_llf$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3",  prev_genes_llf$gene_symbol)
+prev_genes_llf$gene_symbol <- gsub("ZNF559-ZNF177,ZNF177", "ZNF177",  prev_genes_llf$gene_symbol)
 prev_genes_named_llf   <- setNames(prev_genes_llf$Prevalence, prev_genes_llf$gene_symbol)
 prev_species_named_llf <- setNames(prev_species_llf$Prevalence, prev_species_llf$taxon_species)
 
@@ -352,6 +373,7 @@ rep_sum_lec$taxon_species <- species_label_map(rep_sum_lec$taxon_species)
 
 prev_genes_lec$gene_symbol <- gsub(" \\s*\\([^\\)]+\\)", "",  prev_genes_lec$gene_symbol)
 prev_genes_lec$gene_symbol <- gsub("GPRASP3,ARMCX5-GPRASP2", "GPRASP3", prev_genes_lec$gene_symbol)
+prev_genes_lec$gene_symbol <- gsub("ZNF559-ZNF177,ZNF177", "ZNF177",  prev_genes_lec$gene_symbol)
 prev_genes_named_lec   <- setNames(prev_genes_lec$Prevalence, prev_genes_lec$gene_symbol)
 prev_species_named_lec <- setNames(prev_species_lec$Prevalence, prev_species_lec$taxon_species)
 
@@ -405,4 +427,5 @@ plot_manhattan(
 )
 
 message("Figure 3 panels written to: ", normalizePath(opt$out_dir))
+
 
