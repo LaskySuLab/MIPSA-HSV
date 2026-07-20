@@ -17,7 +17,7 @@ Rscript scripts/disease_counts.R \
  --llf_phe ./Data/llf_1289_phe1.tsv \
  --lec_phe ./Data/lec_763_phe1.tsv \
  --out_dir ./results1/Figure1
- \
+\
 ### Statistics for VirSIGHT and HuSIGHT (Figure 2)
 Rscript scripts/seroprev_plots.R \
   --llf_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -27,26 +27,26 @@ Rscript scripts/seroprev_plots.R \
   --abc_fl Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --leo_fl Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv \
   --out_dir results/Figure2 \
-    \
+\
 ### Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
 1) LLF cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LLF \
   --virsight_promax.llf Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --husight_fl.llf Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --pheno.llf Data/llf_1289_phe.tsv \
+  --pheno.llf Data/llf_1289_phe1.tsv \
   --out_dir Data \
- \
+\
 2) LEC cohort
 Rscript scripts/build_binary_matrices.R \
   --cohort MGBB-LEC \
   --virsight_promax.abc Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --husight_fl.abc Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --virsight_promax.leo Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv \
+  --virsight_promax.leo Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background-HSV.tsv \
   --husight_fl.leo Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv \
-  --pheno.lec Data/lec_763_phe.tsv \
+  --pheno.lec Data/lec_763_phe1.tsv \
   --out_dir Data \
- \
+\
 ### Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
 Rscript scripts/pairwise_glm.R \
 1) LLF cohort
