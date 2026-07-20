@@ -27,7 +27,7 @@ option_list <- list(
   # --- Shared / Other Data ---
   make_option("--abc_vi_promax",  type="character", help="Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
   make_option("--abc_hu_fl",      type="character", help="Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--leo_vi_promax",  type="character", help="Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
+  make_option("--leo_vi_promax",  type="character", help="Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background-HSV.tsv"),
   make_option("--leo_hu_fl",      type="character", help="Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
   make_option("--sig_ab",         type="character", help="results1/Figure4/lec_test_auc_summary_sig.csv"),
 
