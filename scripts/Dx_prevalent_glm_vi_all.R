@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(optparse); library(data.table); library(dplyr); library(stringr); library(purrr); library(tidyr);
   library(ggplot2); library(ggrepel); library(broom); library(meta); library(logistf) # Required for Firth regression
@@ -7,25 +8,33 @@ suppressPackageStartupMessages({
 
 # ----------------------------- CLI -----------------------------
 option_list <- list(
-  make_option("--llf_pheno",      type="character", help="llf_1290_phe.tsv"),
-  make_option("--llf_vi_promax",   type="character", help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
-  make_option("--llf_hu_fl",   type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--llf_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LLF.tsv"),
-  make_option("--llf_hu_bin",   type="character", help="human_fl_bin_MGBB-LLF.tsv"),
-  make_option("--rep_llf",   type="character", help="hsv_bin_fchange_rep_llf.tsv"),
-  make_option("--llf_dx_count",   type="character", help="llf_case_counts_filtered.csv"),
-  make_option("--lec_pheno",   type="character", help="lec_763_phe.tsv"),
-  make_option("--lec_vi_bin",   type="character", help="hsv_promax_bin_MGBB-LEC.tsv"),
-  make_option("--lec_hu_bin",   type="character", help="human_fl_bin_MGBB-LEC.tsv"),
-  make_option("--abc_vi_promax",   type="character", help="IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
-  make_option("--abc_hu_fl",   type="character", help="IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--leo_vi_promax",   type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
-  make_option("--leo_hu_fl",   type="character", help="IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
-  make_option("--rep_lec",   type="character", help="hsv_bin_fchange_rep_lec.tsv"),
-  make_option("--lec_dx_count",   type="character", help="lec_case_counts_filtered.csv"),
-  make_option("--sig_ab",   type="character", help="lec_test_auc_summary_sig.csv"),
-  make_option("--out_dir",  type="character", default="results/Disease", help="Output dir")
+  # --- LLF Cohort Files ---
+  make_option("--llf_pheno",     type="character", help="Data/llf_1290_phe1.tsv"),
+  make_option("--llf_vi_promax",  type="character", help="Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--llf_hu_fl",      type="character", help="Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--llf_vi_bin",     type="character", help="Data/hsv_promax_bin_MGBB-LLF.tsv"),
+  make_option("--llf_hu_bin",     type="character", help="Data/human_fl_bin_MGBB-LLF.tsv"),
+  make_option("--rep_llf",        type="character", help="results1/Run/hsv_bin_fchange_rep_llf.tsv"),
+  make_option("--llf_dx_count",   type="character", help="results1/Figure1/llf_case_counts_filtered.csv"),
+
+  # --- LEC Cohort Files ---
+  make_option("--lec_pheno",     type="character", help="Data/lec_763_phe1.tsv"),
+  make_option("--lec_vi_bin",     type="character", help="Data/hsv_promax_bin_MGBB-LEC.tsv"),
+  make_option("--lec_hu_bin",     type="character", help="Data/human_fl_bin_MGBB-LEC.tsv"),
+  make_option("--rep_lec",        type="character", help="results1/Run/hsv_bin_fchange_rep_lec.tsv"),
+  make_option("--lec_dx_count",   type="character", help="results1/Figure1/lec_case_counts_filtered.csv"),
+
+  # --- Shared / Other Data ---
+  make_option("--abc_vi_promax",  type="character", help="Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
+  make_option("--abc_hu_fl",      type="character", help="Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
+  make_option("--leo_vi_promax",  type="character", help="Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
+  make_option("--leo_hu_fl",      type="character", help="Data/IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
+  make_option("--sig_ab",         type="character", help="results1/Figure4/lec_test_auc_summary_sig.csv"),
+
+  # --- Output Directory ---
+  make_option("--out_dir",        type="character", default="results1/Dx_pre", help="Output dir")
 )
+
 opt <- parse_args(OptionParser(option_list=option_list))
 dir.create(opt$out_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -52,8 +61,8 @@ run_glm_virus <- function(ii, cohort_name, input_dt) {
   control_pos_vec <- colSums(input_dt[control_idx, ..vi_var] > 1, na.rm = TRUE)
   
   if (cohort_name=='llf'){
-    covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + ics_trim_totnum_5y + cci"
-  } else {covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + cci"}
+    covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + ics_trim_totnum_5y + cci + rx_immunosuppressant_24m + rx_antiviral_24m + rx_antineoplastic_24m"
+  } else {covars <- "Age_at_collect + Gender + BMI_most_recent + Race_Group + Smoking + Alcohol + cci + cohort + rx_immunosuppressant_24m + rx_antiviral_24m + rx_antineoplastic_24m"}
   
   ## ---------- 2. Per-Protein Loop -----------------------------------------
   glm_results <- lapply(seq_along(vi_var), function(j) {
@@ -162,7 +171,7 @@ read_results <- function(pattern) {
     }
     if (!"cohort" %in% names(dt)) {
       if (grepl("_llf\\.csv", f))   dt[, cohort := "llf"]
-      if (grepl("_ale\\.csv", f)) dt[, cohort := "lec"]
+      if (grepl("_lec\\.csv", f)) dt[, cohort := "lec"]
       if (grepl("_all\\.csv", f)) dt[, cohort := "all"]
     }
     dt[, file := basename(f)]
@@ -185,22 +194,22 @@ llf_hu_fl <- fread(opt$llf_hu_fl)
 if (!"var_id" %in% names(llf_hu_fl)) llf_hu_fl[, var_id := paste0("h", seq_len(.N))]
 
 # Select subjects and Merge
-sample_lists = llf_phe1$Sample_ID
+sample_lists = llf_phe1$Sample_Id
 llf.vi = subset(llf_vi_promax, select = sample_lists) #1290 subjects
 llf.vi[llf.vi==1] <- 0
 
 llf.vi1 = as.data.frame(t(llf.vi))
 colnames(llf.vi1) = llf_vi_promax$UniProt_acc
-llf.vi1$Sample_ID = rownames(llf.vi1)
+llf.vi1$Sample_Id = rownames(llf.vi1)
 
 merge_dt_raw.llf <- llf_phe1 %>%
-  right_join(llf.vi1, by = "Sample_ID") %>%
+  right_join(llf.vi1, by = "Sample_Id") %>%
   as.data.table()
 
 # ----------------------------- Run GLMs -----------------------------
 # Human FL predictors (all antibodies)
 rep_llf = fread(opt$rep_llf)
-vi_var <- unique(rep_llf$var_id) #1021
+vi_var <- unique(rep_llf$var_id) #1008
 
 # ----------------------------- Disease cols -----------------------------
 dx_cols <- grep("_combine$", colnames(merge_dt_raw.llf), value = TRUE)
@@ -208,13 +217,16 @@ if (length(dx_cols) == 0) stop("No *_combine disease columns found. Did build_di
 
 # Keep diseases with at least 13 positives
 dx_sums <- colSums(merge_dt_raw.llf[, ..dx_cols], na.rm = TRUE)
-dx_list <- names(dx_sums[dx_sums >= 12.9])
-ex_list <- c(default="AIDS","Depression","HepatitisB","HepatitisC","Migraine","Opioid_use_disorder","Headache","Asthma","Chronic_viral_hepatitis")
-dx_list <- setdiff(dx_list, paste0(ex_list,"_combine")) # 62 diseases
+dx_list <- names(dx_sums[dx_sums >= 12.89])
+ex_list <- c(default="Depression","Opioid_use_disorder","Alcoholism","toothache","sciatica","Psychosis","loose_tooth",
+             "Asthma","Headache","Migraine","Post_Traumatic_Stress_Disorder","Bipolar_Disorder","Female_Infertility","Male_Infertility",
+             "Schizophrenia","Chronic_viral_hepatitis","Other_chronic_heptitis","Alcohol_liver_disease","Hiatus_Hernia",
+             "Diverticular","Cataract","Presbyopia","Mouth_ulcer","Lyme_Disease")
+dx_list <- setdiff(dx_list, paste0(ex_list,"_combine")) # 76 diseases
 dx_list <- gsub("_combine", "", dx_list)
 dx_list <- paste0(dx_list,"_at_collect")
 
-lapply(1:length(dx_list), run_glm_virus, cohort_name = "llf", input_dt = merge_dt_raw.llf)
+# lapply(1:length(dx_list), run_glm_virus, cohort_name = "llf", input_dt = merge_dt_raw.llf)
 
 # ----------------------------- IO in LEC------------------------------
 # Phenotype table and covariate processing in LEC
@@ -251,12 +263,32 @@ merge_dt_raw.lec <- lec_phe1 %>%
 dx_test <- colSums(merge_dt_raw.lec[, ..dx_list], na.rm = TRUE)
 length(dx_test)==length(dx_list)
 
-lapply(1:length(dx_list), run_glm_virus, cohort_name = "lec", input_dt = merge_dt_raw.lec)
+# lapply(1:length(dx_list), run_glm_virus, cohort_name = "lec", input_dt = merge_dt_raw.lec)
 
 # ----------------------------- IO in Pooled LLF-LEC------------------------------
 common_names = intersect(colnames(merge_dt_raw.lec), colnames(merge_dt_raw.llf))
 
-merge_dt_raw.all = rbind(merge_dt_raw.llf[, ..common_names], merge_dt_raw.lec[, ..common_names]) #2053
+# 1. Split common_names into chunks of 5000
+chunk_size <- 5000
+col_chunks <- split(common_names, ceiling(seq_along(common_names) / chunk_size))
+
+# 2. Merge each chunk separately
+merged_chunks <- lapply(col_chunks, function(cols) {
+  # rbind only a small subset of columns at a time
+  dt_chunk <- rbind(
+    merge_dt_raw.llf[, ..cols], 
+    merge_dt_raw.lec[, ..cols]
+  )
+  return(dt_chunk)
+})
+
+# 3. Combine the chunks side-by-side
+merge_dt_raw.all <- do.call(cbind, merged_chunks) #2052
+setnames(merge_dt_raw.all, gsub("^[0-9]+\\.", "", names(merge_dt_raw.all)))
+
+# 4. Clean up to free memory
+rm(merged_chunks)
+gc()
 
 dx_test <- colSums(merge_dt_raw.all[, ..dx_list], na.rm = TRUE)
 length(dx_test)==length(dx_list)
@@ -281,12 +313,12 @@ res_wide = left_join(res_wide, dx_lookup, by=c('disease'='Disease'))
 res_wide$disease = gsub('_', ' ', res_wide$disease)
 res_wide$Category = gsub('_', ' ', res_wide$Category)
 
-res_wide$p.adj_lec = p.adjust(res_wide$P_lec, method='fdr')
 res_wide$p.adj_all = p.adjust(res_wide$P_all, method='fdr')
 res_wide$p.adj_llf = p.adjust(res_wide$P_llf, method='fdr')
+res_wide$p.adj_lec = p.adjust(res_wide$P_lec, method='fdr')
 
 fwrite(res_wide,
        file.path(opt$out_dir, "rep_vi_dx_all_pre_glmf_ann.tsv"),
        sep = "\t", quote = FALSE)
-
+                        
 message("Done. Outputs in: ", opt$out_dir)                        
