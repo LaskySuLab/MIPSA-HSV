@@ -300,3 +300,5 @@ res_wide$p.adj_lec = p.adjust(res_wide$P_lec, method='fdr')
 fwrite(res_wide,
        file.path(opt$out_dir, "rep_hu_dx_all_pre_glmf_ann.tsv"),
        sep = "\t", quote = FALSE)
+
+message("Done. Outputs in: ", opt$out_dir)   
