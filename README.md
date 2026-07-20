@@ -62,7 +62,7 @@ Rscript scripts/run_hu_vs_hsv_glm.R \
   --n_cores 12 \
  \
 ### Manhattan, Diamond, and Circos plots (Figure 3)
-Rscript scripts/plots_pairwise_panels.R \
+Rscript scripts/plots_qtl_panels.R \
   --llf_all results/Run/llf_hsv_bin_glm_all.tsv \
   --llf_sig results/Run/llf_hsv_bin_glm_sig.tsv \
   --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
@@ -76,7 +76,7 @@ Rscript scripts/plots_pairwise_panels.R \
   --rep_llf results/Run/hsv_bin_fchange_rep_llf.tsv \
   --rep_lec results/Run/hsv_bin_fchange_rep_lec.tsv \
   --out_dir results/Figure3
-   \
+  \
 ### Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/lasso_prediction.R \
   --train_vi Data/hsv_promax_bin_MGBB-LLF.tsv \
