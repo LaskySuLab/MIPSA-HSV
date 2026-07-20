@@ -96,12 +96,30 @@ collapse_minP <- function(dt) {
     ungroup()
 }
 
+# Mapping
+disease_mapping <- data.frame(
+  disease = c(
+    "Systemic_lupus_erythematosus", "Rheumatoid_Arthritis", "Sjogren_syndrome", "Scleroderma", "Dermatomyositis", "Ankylosing_spondylitis", "Polymyalgia_rheumatica", "Antiphospholipid_Syndrome",
+    "Multiple_sclerosis", "Guillain_Barre_syndrome", "Myasthenia_gravis", "Inflammatory_bowel_disease", "Celiac_disease", "Primary_Biliary_Cholangitis",
+    "Type1_Diabetes", "Hashimoto_thyroiditis", "Graves_disease", "Pernicious_anemia", "Autoimmune_hemolytic_anemia", "Psoriasis", "Vitiligo", "Alopecia_areata", "Giant_cell_arteritis", "ANCA_Associated_Vasculitis",
+    "Aortic_aneurysm_dissection", "Arterial_embolism_thrombosis", "Atrial_fibrillation", "Cardiomyopathy", "Chronic_pulmonary_heart_disease", "Congestive_heart_failure", "Coronary_artery_disease", "CVD_excl_stroke", "Deep_venous_thrombosis", "Hypertensive_heart_disease", "Myocardial_infarction", "Peripheral_vascular_disease", "Stroke",
+    "Cancer", "Bladder_cancer", "Breast_cancer", "Colon_Rectum_cancer", "Leukemia", "Liver_cancer", "Lung_cancer", "Melanoma", "Non_Hodgkin_Lymphoma", "Ovary_cancer", "Pancrease_cancer", "Prostate_cancer", "Stomach_cancer", "Uterine_corpus_cancer",
+    "Alzheimer", "Amyotrophic_lateral_sclerosis", "CognitiveDeficit", "FrontotemporalDementia", "LewyBody", "NonSpec_Dementia", "VascularDementia", "Parkinson",
+    "Bronchiectasis", "Bronchitis_Emphysema", "Chronic_Bronchitis", "COPD", "Coin_lesion_lung_disease", "Emphysema", "Idiopathic_pulmonary_fibrosis", "Interstitial_lung_disease", "Pneumonia", "Allergic_rhinitis",
+    "Alcohol_liver_disease", "Chronic_liver_disease", "Chronic_viral_hepatitis", "Cirrhosis", "NAFLD", "Nonalcoholic_steatohepatitis", "Gallstone", "GERD", "Hiatus_Hernia", "Diverticular", "Mouth_ulcer",
+    "Type2_Diabetes", "Gout", "Hypoparathyroidism", "Hypothyroidism", "Chronic_kidney_disease", "osteoporosis"
+  ),
+  major_category = c(
+    rep("Auto: Connective", 8), rep("Auto: Neuro", 3), rep("Auto: GI/Hepatic", 3), rep("Auto: Endo/Hemato", 5), rep("Auto: Derma", 3), rep("Auto: Vascular", 2),
+    rep("CVD", 13), rep("Oncology", 14), rep("Neurology", 8), rep("Respiratory", 10), rep("Hepato & GI", 11), rep("Metabolic", 6)
+  ), stringsAsFactors = FALSE
+)
 
 # Disease categories
 dx_categories <- list(
   
   Auto_organ = c(
-    "Alopecia_areata", "Autoimmune_hemolytic_anemia",
+    "Alopecia_areata", "Autoimmune_hemolytic_anemia", 
     "Autoimmune_hepatitis", "Celiac_disease", "Graves_disease", "Guillain_Barre_syndrome",
     "Hashimoto_thyroiditis", "Inflammatory_bowel_disease", "Multiple_sclerosis",
     "Myasthenia_gravis", "Neuromyelitis_optica", "Pemphigus", "Pernicious_anemia",
@@ -109,6 +127,7 @@ dx_categories <- list(
   ),
   
   Auto_system = c(
+    "ANCA_Associated_Vasculitis","Antiphospholipid_Syndrome",
     "Ankylosing_spondylitis", "Behcet_disease", "Dermatomyositis",
     "Giant_cell_arteritis", "Polymyalgia_rheumatica", "Rheumatoid_Arthritis", 
     "Scleroderma", "Sjogren_syndrome", "Systemic_lupus_erythematosus"
@@ -130,7 +149,7 @@ dx_categories <- list(
   ),
   
   Neuro = c(
-    "Alzheimer", "CognitiveDeficit", "FrontotemporalDementia",
+    "Alzheimer", "Amyotrophic_lateral_sclerosis", "CognitiveDeficit", "FTD_Associated_Dementia",
     "LewyBody", "NonSpec_Dementia", "Parkinson", "VascularDementia"
   ),
   
@@ -226,4 +245,44 @@ lab_categories <- list(
   Pulmonary = c(
     "FEV1_most_recent", "FVC_most_recent", "FEV1_FVC_most_recent"
   )
+)
+
+#' optional cleanups of product names
+clean_replace <- c(
+  "Alkaline nuclease (EC 3.1.-.-)" = "Alkaline nuclease",
+  "Deneddylase (EC 3.4.19.12)" = "Deneddylase",
+  "E3 ubiquitin-protein ligase ICP0 (EC 6.3.2.-)" = "E3 ubiquitin-protein ligase",
+  "Large tegument protein deneddylase (EC 3.4.19.12) (EC 3.4.22.-)" = "Large tegument protein deneddylase",
+  "Nuclear egress protein 2" = "Nuclear egress protein",
+  "Thymidine kinase (EC 2.7.1.21)" = "Thymidine kinase",
+  "US11 *1;US11 *1" = "Protein US11",
+  "Uracil-DNA glycosylase (UDG) (EC 3.2.2.27) (UNG)" = "Uracil-DNA glycosylase",
+  
+  "Envelope glycoprotein UL130" = "Envelope glycoprotein",
+  "Membrane RL1 protein2 (Membrane protein RL12)" = "Membrane protein",
+  "Membrane glycoprotein US3;Membrane glycoprotein US3" = "Membrane glycoprotein",
+  "Membrane glycoprotein US7;Membrane glycoprotein US7" = "Membrane glycoprotein",
+  "Membrane protein RL12;Membrane protein RL12" = "Membrane protein",
+  "Membrane protein RL13;Membrane protein RL13" = "Membrane protein",
+  "Membrane protein RL12" = "Membrane protein",
+  "Membrane protein UL20" = "Membrane protein",
+  "Tegument protein UL43" = "Tegument protein",
+  "UL37" = "Protein UL37",
+  " immediate early glycoprotein" = "",
+  
+  "Envelope glycoprotein gpUL55" = "Envelope glycoprotein",
+  "Immediate early protein " = "",
+  "Membrane RL1 protein2 (Membrane protein RL12)" = "Membrane protein",
+  "Membrane RL1 protein2;Membrane RL1 protein2" = "Membrane protein",
+  "Membrane glycoprotein US7;Membrane glycoprotein US7" = "Membrane glycoprotein",
+  "ORFS326C;ORFS326C;ORFS326C" = "ORFS326C",
+  "Transmembrane protein HWLF3" = "Transmembrane protein",
+  "UL74 protein" = "Protein UL74",
+  
+  "BZLF1 (BZLF1 protein)" = "Transcriptional activator",
+  "EBNA3C (EBNA3C nuclear protein)" = "EBV nuclear antigen",
+  "Nuclear antigen EBNA-3C;Nuclear antigen EBNA-3C" = "EBV nuclear antigen",
+  "Nuclear protein EBNA-2" = "EBV nuclear antigen",
+  "Protein BRRF1;Protein BRRF1;Protein BRRF1" = "Transcriptional activator",
+  "Uncharacterized protein BLRF3" = "Uncharacterized protein"
 )
