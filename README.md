@@ -14,9 +14,10 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 ## Repro order (discovery → replication → prediction → disease association)
 ### Statistics for diseases in the cohorts (Figure 1)
 Rscript scripts/disease_counts.R \
-  --llf_phe Data/llf_1289_phe.tsv \
-  --lec_phe Data/lec_763_phe.tsv \
-  --out_dir results/Figure1 \
+Rscript scripts/disease_counts.R \
+ --llf_phe ./Data/llf_1289_phe1.tsv \
+ --lec_phe ./Data/lec_763_phe1.tsv \
+ --out_dir ./results1/Figure1
  \
 ### Statistics for VirSIGHT and HuSIGHT (Figure 2)
 Rscript scripts/seroprev_plots.R \
