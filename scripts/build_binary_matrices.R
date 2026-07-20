@@ -1,5 +1,12 @@
 #!/usr/bin/env Rscript
 
+# Build binary matrices for HSV peptides and Human Full-Length antibodies
+# Description:
+#   - Converts raw FoB data (>1 → 1, else 0) to binary matrices
+#   - Removes control samples
+#   - Keeps features with ≥1% prevalence
+#   - Handles both MGBB-LLF and MGBB-LEC cohorts
+
 suppressPackageStartupMessages({
   library(optparse)
   library(data.table)
@@ -13,10 +20,10 @@ option_list <- list(
   make_option("--husight_fl.llf", type="character", help="IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
   make_option("--virsight_promax.abc", type="character", help="IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
   make_option("--husight_fl.abc", type="character", help="IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv"),
-  make_option("--virsight_promax.leo", type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background_Old-Format-HSV.tsv"),
+  make_option("--virsight_promax.leo", type="character", help="IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background-HSV.tsv"),
   make_option("--husight_fl.leo", type="character", help="IB1189_HuSIGHT_FullLength_Hits_Fold-Over-Background.tsv"),
-  make_option("--pheno.llf", type="character", help="llf_1289_phe.tsv"),
-  make_option("--pheno.lec", type="character", help="lec_763_phe.tsv"),
+  make_option("--pheno.llf", type="character", help="llf_1289_phe1.tsv"),
+  make_option("--pheno.lec", type="character", help="lec_763_phe1.tsv"),
   make_option("--out_dir", type="character", default="./Data",
               help="Output directory [default %default]")
 )
@@ -101,10 +108,13 @@ mat_vi[] <- lapply(mat_vi, bin_from_fob)
 mat_vi1 <- as.data.frame(t(mat_vi))
 colnames(mat_vi1) <- vi_hsv$UniProt_acc
 rownames(mat_vi1) <- NULL
-mat_vi1 <- apply_min_prevalence(mat_vi1, length(sample_lists)/100)
 dim(mat_vi1)
+# [1]  763 4657
+mat_vi2 <- apply_min_prevalence(mat_vi1, length(sample_lists)/100)
+dim(mat_vi2)
 # [1]  763 2342
 mat_vi1$Subject_Id <- colnames(mat_vi)
+mat_vi2$Subject_Id <- colnames(mat_vi)
 
 # ----------LEC: Process HuSIGHT Full-Length ----------
 hu.abc <- fread(opt$husight_fl.abc)
@@ -121,15 +131,16 @@ mat_hu[] <- lapply(mat_hu, bin_from_fob)
 mat_hu1 <- as.data.frame(t(mat_hu))
 colnames(mat_hu1) <- hu.abc1$var_id
 rownames(mat_hu1) <- NULL
-mat_hu1 <- apply_min_prevalence(mat_hu1, length(sample_lists)/100)
 dim(mat_hu1)
+# [1]   763 15083
+mat_hu2 <- apply_min_prevalence(mat_hu1, length(sample_lists)/100)
+dim(mat_hu2)
 # [1]  763 1064
 mat_hu1$Subject_Id <- colnames(mat_hu)
+mat_hu2$Subject_Id <- colnames(mat_hu)
 
 # ----------LEC: Write Outputs ----------
 out_virus <- file.path(opt$out_dir, sprintf("hsv_promax_bin_%s.tsv", 'MGBB-LEC'))
 out_human <- file.path(opt$out_dir, sprintf("human_fl_bin_%s.tsv", 'MGBB-LEC'))
-fwrite(as.data.table(mat_vi1), out_virus, sep = "\t")
-fwrite(as.data.table(mat_hu1), out_human, sep = "\t")
-
-
+fwrite(as.data.table(mat_vi2), out_virus, sep = "\t")
+fwrite(as.data.table(mat_hu2), out_human, sep = "\t")
