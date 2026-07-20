@@ -8,7 +8,7 @@ This repository reproduces the analyses described in the manuscript: cohort sero
 ## Data expectations
 - **Viral**: VirSIGHT peptide/protein hits, with UniProt IDs and taxonomic annotations.
 - **Human**: HuSIGHT full-length hits (binary), with UniProt and HGNC gene symbol.
-- **Phenotypes**: Demographic covariates (Age, Sex/Gender, BMI, Race, Smoking, Alcohol, ICS, and CCI modified by age), and disease endpoints (prevalent, incident).
+- **Phenotypes**: Demographic covariates (Age, Sex/Gender, BMI, Race, Smoking, Alcohol, medications including ICS, and CCI modified by age), and disease endpoints (prevalent, incident).
 - **Replication cohort**: matching ID space for strict peptide–autoantigen ID matches.
 
 ## Repro order (discovery → replication → prediction → disease association)
