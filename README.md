@@ -79,17 +79,14 @@ Rscript scripts/plots_qtl_panels.R \
   \
 ### Prediction (Figure 4): LASSO + ROC/PR + sens/spec + corr
 Rscript scripts/lasso_prediction.R \
---train_vi ./Data/hsv_promax_bin_MGBB-LLF.tsv \
---train_hu ./Data/human_fl_bin_MGBB-LLF.tsv \
---train_vi_anno ./Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---train_hu_anno ./Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---test_vi_anno ./Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
---test_hu_anno ./Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
---test_vi ./Data/hsv_promax_bin_MGBB-ABC.tsv \
---test_hu ./Data/human_fl_bin_MGBB-ABC.tsv \
---rep_hsv ./Run/hsv_bin_fchange_rep_llf.tsv \
---ab_list PHLDA1:h6808,ZNF550:h6329,IQCB1:h3143,DNAJC12:h8069,P3H4:h8250 \
---out_dir ./results/Figure4/
+--train_vi Data/hsv_promax_bin_MGBB-LLF.tsv \
+--train_hu Data/human_fl_bin_MGBB-LLF.tsv \
+--train_vi_anno Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
+--train_hu_anno Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
+--test_vi Data/hsv_promax_bin_MGBB-LEC.tsv \
+--test_hu Data/human_fl_bin_MGBB-LEC.tsv \
+--rep_hsv ./results1/Run/hsv_bin_fchange_rep_llf.tsv \
+--out_dir results/Figure4/
 
 ### Disease GLMs (prevalent or incident disease)
 Rscript scripts/Dx_prevalent_glm_hu_all.R \
