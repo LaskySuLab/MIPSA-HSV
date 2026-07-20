@@ -29,17 +29,10 @@ Rscript scripts/seroprev_plots.R \
   --out_dir results/Figure2 \
 \
 ### Build binary matrices from raw VirSIGHT/HuSIGHT CSVs
-1) LLF cohort
 Rscript scripts/build_binary_matrices.R \
-  --cohort MGBB-LLF \
   --virsight_promax.llf Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --husight_fl.llf Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --pheno.llf Data/llf_1289_phe1.tsv \
-  --out_dir Data \
-\
-2) LEC cohort
-Rscript scripts/build_binary_matrices.R \
-  --cohort MGBB-LEC \
   --virsight_promax.abc Data/IB1021_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --husight_fl.abc Data/IB1021_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --virsight_promax.leo Data/IB1189_VirSIGHT_Promax_Hits_Fold-Over-Background-HSV.tsv \
@@ -48,25 +41,25 @@ Rscript scripts/build_binary_matrices.R \
   --out_dir Data \
 \
 ### Hu–Virus pairwise GLMs (Hu Ab ~ Virus peptide + covariates)
-Rscript scripts/pairwise_glm.R \
+Rscript scripts/run_hu_vs_hsv_glm.R \
 1) LLF cohort
 Rscript scripts/run_hu_vs_hsv_glm.R \
-  --llf_phe Data/llf_1289_phe.tsv \
+  --llf_phe Data/llf_1290_phe1.tsv \
   --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
   --llf_vi_bin Data/hsv_promax_bin_MGBB-LLF.tsv \
   --llf_hu_bin Data/human_fl_bin_MGBB-LLF.tsv \
   --out_dir results/Run \
-  --n_cores 6 \
+  --n_cores 12 \
  \
 2) LEC cohort
   --llf_vi_promax Data/IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv \
   --llf_hu_fl Data/IB1007_HuSIGHT_FullLength_Hits_Fold-Over-Background.csv \
-  --lec_phe Data/lec_763_phe.tsv \
+  --lec_phe Data/lec_763_phe1.tsv \
   --lec_vi_bin Data/hsv_promax_bin_MGBB-LEC.tsv \
   --lec_hu_bin Data/human_fl_bin_MGBB-LEC.tsv \
   --out_dir results/Run \
-  --n_cores 6 \
+  --n_cores 12 \
  \
 ### Manhattan, Diamond, and Circos plots (Figure 3)
 Rscript scripts/plots_pairwise_panels.R \
