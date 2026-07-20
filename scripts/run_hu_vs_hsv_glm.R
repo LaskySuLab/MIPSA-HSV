@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
 opt_list <- list(
   # LLF inputs
   make_option("--llf_phe", type="character",
-              help="llf_1289_phe.tsv"),
+              help="llf_1289_phe1.tsv"),
   make_option("--llf_vi_promax", type="character",
               help="IB1007_VirSIGHT_Promax_Hits_Fold-Over-Background.csv"),
   make_option("--llf_hu_fl", type="character",
@@ -24,14 +24,14 @@ opt_list <- list(
   
   # LEC inputs
   make_option("--lec_phe", type="character",
-              help="lec_763_phe.tsv"),
+              help="lec_763_phe1.tsv"),
   make_option("--lec_vi_bin", type="character",
               help="hsv_promax_bin_MGBB-LEC.tsv"),
   make_option("--lec_hu_bin", type="character",
               help="human_fl_bin_MGBB-LEC.tsv"),
   
   # General
-  make_option("--out_dir", type="character", default="results/Run",
+  make_option("--out_dir", type="character", default="results1/Run",
               help="Output directory [default %default]"),
   make_option("--n_cores", type="integer", default=max(1, detectCores()-1),
               help="CPU cores to use [default %default]")
@@ -121,7 +121,7 @@ if (!all(c(opt$llf_phe, opt$llf_vi_bin, opt$llf_hu_bin, opt$llf_vi_promax, opt$l
   # Variables
   hu_cols_llf <- setdiff(colnames(llf_hu_bin), "Subject_Id") #2257
   vi_cols_llf <- setdiff(colnames(llf_vi_bin), "Subject_Id") #2322
-  covars_llf  <- c("Age_at_collect", "Gender", "BMI_most_recent", "Race_Group", "Smoking", "Alcohol", "ics_trim_totnum_5y")
+  covars_llf  <- c("Age_at_collect", "Gender", "BMI_most_recent", "Race_Group", "Smoking", "Alcohol", "ics_trim_totnum_5y", 'rx_immunosuppressant_24m', 'rx_antiviral_24m', 'rx_antineoplastic_24m')
   missing_cov <- setdiff(covars_llf, names(llf_merged))
   if (length(missing_cov)) stop("LLF: missing covariates: ", paste(missing_cov, collapse=", "))
   
@@ -143,8 +143,12 @@ if (!all(c(opt$llf_phe, opt$llf_vi_bin, opt$llf_hu_bin, opt$llf_vi_promax, opt$l
   if ("gene_symbol" %in% names(llf_res)) {
     llf_res$gene_symbol <- ifelse(
       grepl("\\s*\\(Unverified\\)", llf_res$gene_symbol), "", llf_res$gene_symbol)
+    llf_res$gene_symbol <- ifelse(
+      grepl("GPRASP3,ARMCX5-GPRASP2", llf_res$gene_symbol), "GPRASP3", llf_res$gene_symbol)
+    llf_res$gene_symbol <- ifelse(
+      grepl("ZNF559-ZNF177,ZNF177", llf_res$gene_symbol), "ZNF177", llf_res$gene_symbol)
   }
-  
+
   # Save all + sig
   out_all_llf <- file.path(opt$out_dir, "llf_hsv_bin_glm_all.tsv")
   out_sig_llf <- file.path(opt$out_dir, "llf_hsv_bin_glm_sig.tsv")
@@ -157,48 +161,48 @@ if (!all(c(opt$llf_phe, opt$llf_vi_bin, opt$llf_hu_bin, opt$llf_vi_promax, opt$l
     pval_cutoff <- max(llf_res$P[sig_idx], na.rm = TRUE)
     message(sprintf("LLF: FDR<=0.05 p-value cutoff ≈ %.10f", pval_cutoff))
   } else {
-    message("LLF: No FDR-significant results at 0.05.")
+    message("LLF: No FDR-significant results at 0.05.") #cutoff ≈ 0.0001883496
   }
 }
 
-hsv.sig = subset(llf_res, llf_res$P.adj < 0.05) #19812
+hsv.sig = subset(llf_res, llf_res$P.adj < 0.05) #19748
 
 counts_summarise <- hsv.sig %>% group_by(taxon_species) %>% summarise(total_count = n())
 # taxon_species            total_count
-# 1 Human alphaherpesvirus 1        2845
-# 2 Human alphaherpesvirus 2        2369
-# 3 Human alphaherpesvirus 3         258
-# 4 Human betaherpesvirus 5        11307
-# 5 Human betaherpesvirus 6A         293
-# 6 Human betaherpesvirus 6B         331
-# 7 Human betaherpesvirus 7           83
-# 8 Human gammaherpesvirus 4        2062
-# 9 Human gammaherpesvirus 8         264
+# 1 Human alphaherpesvirus 1        2838
+# 2 Human alphaherpesvirus 2        2295
+# 3 Human alphaherpesvirus 3         268
+# 4 Human betaherpesvirus 5        11341
+# 5 Human betaherpesvirus 6A         277
+# 6 Human betaherpesvirus 6B         327
+# 7 Human betaherpesvirus 7           81
+# 8 Human gammaherpesvirus 4        2075
+# 9 Human gammaherpesvirus 8         246
 
 counts_summarise <- hsv.sig[,c('taxon_species','var_id')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(var_id))
-length(unique(hsv.sig$var_id)) #2194
-# 1 Human alphaherpesvirus 1          458
+length(unique(hsv.sig$var_id)) #2199
+# 1 Human alphaherpesvirus 1          456
 # 2 Human alphaherpesvirus 2          322
-# 3 Human alphaherpesvirus 3           76
+# 3 Human alphaherpesvirus 3           81
 # 4 Human betaherpesvirus 5           667
-# 5 Human betaherpesvirus 6A           65
-# 6 Human betaherpesvirus 6B           58
+# 5 Human betaherpesvirus 6A           68
+# 6 Human betaherpesvirus 6B           59
 # 7 Human betaherpesvirus 7            20
-# 8 Human gammaherpesvirus 4          479
+# 8 Human gammaherpesvirus 4          477
 # 9 Human gammaherpesvirus 8           49
 
-hsv.sig1= hsv.sig[complete.cases(hsv.sig[ ,c('gene_symbol')]),] #19270
-length(unique(hsv.sig1$gene_symbol)) #990
+hsv.sig1= hsv.sig[complete.cases(hsv.sig[ ,c('gene_symbol')]),] #19199
+length(unique(hsv.sig1$gene_symbol)) #993
 counts_summarise <- hsv.sig1[,c('taxon_species','gene_symbol')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(gene_symbol))
-# 1 Human alphaherpesvirus 1          274
-# 2 Human alphaherpesvirus 2          298
+# 1 Human alphaherpesvirus 1          266
+# 2 Human alphaherpesvirus 2          291
 # 3 Human alphaherpesvirus 3          108
-# 4 Human betaherpesvirus 5           467
-# 5 Human betaherpesvirus 6A          106
+# 4 Human betaherpesvirus 5           474
+# 5 Human betaherpesvirus 6A          105
 # 6 Human betaherpesvirus 6B           94
-# 7 Human betaherpesvirus 7            50
-# 8 Human gammaherpesvirus 4          204
-# 9 Human gammaherpesvirus 8           76
+# 7 Human betaherpesvirus 7            47
+# 8 Human gammaherpesvirus 4          200
+# 9 Human gammaherpesvirus 8           74
 
 
 # -------------------------- LEC block --------------------------
@@ -220,9 +224,9 @@ if (!all(c(opt$lec_phe, opt$lec_vi_bin, opt$lec_hu_bin, opt$llf_vi_promax, opt$l
     as.data.table()
 
   # Variables
-  hu_cols_lec <- setdiff(colnames(lec_hu_bin), "Sample_Id") #1065
-  vi_cols_lec <- setdiff(colnames(lec_vi_bin), "Sample_Id") #2322
-  covars_lec  <- c("Age_at_collect", "Gender", "BMI_most_recent", "Race_Group", "Smoking", "Alcohol", "cohort")
+  hu_cols_lec <- setdiff(colnames(lec_hu_bin), "Subject_Id") #1064
+  vi_cols_lec <- setdiff(colnames(lec_vi_bin), "Subject_Id") #2342
+  covars_lec  <- c("Age_at_collect", "Gender", "BMI_most_recent", "Race_Group", "Smoking", "Alcohol", "ics_trim_totnum_5y", 'rx_immunosuppressant_24m', 'rx_antiviral_24m', 'rx_antineoplastic_24m')
   missing_cov <- setdiff(covars_lec, names(lec_merged))
   if (length(missing_cov)) stop("LEC: missing covariates: ", paste(missing_cov, collapse=", "))
   
@@ -243,6 +247,10 @@ if (!all(c(opt$lec_phe, opt$lec_vi_bin, opt$lec_hu_bin, opt$llf_vi_promax, opt$l
   if ("gene_symbol" %in% names(llf_res)) {
     llf_res$gene_symbol <- ifelse(
       grepl("\\s*\\(Unverified\\)", llf_res$gene_symbol), "", llf_res$gene_symbol)
+    llf_res$gene_symbol <- ifelse(
+      grepl("GPRASP3,ARMCX5-GPRASP2", llf_res$gene_symbol), "GPRASP3", llf_res$gene_symbol)
+    llf_res$gene_symbol <- ifelse(
+      grepl("ZNF559-ZNF177,ZNF177", llf_res$gene_symbol), "ZNF177", llf_res$gene_symbol)
   }
   
   # Save all + sig
@@ -253,20 +261,17 @@ if (!all(c(opt$lec_phe, opt$lec_vi_bin, opt$lec_hu_bin, opt$llf_vi_promax, opt$l
 
   # ------------------ Replication (LLF -> LEC) ------------------
   if (exists("llf_res")) {
-    # LLF significant with gene symbols cleaned like your code
-    llf_res1 = llf_res[complete.cases(llf_res[ ,c('gene_symbol')]),] 
-    llf_sig <- copy(llf_res1[P.adj < 0.05])
 
     # LEC significant set
-    lec_sig = subset(lec_res, lec_res$qtl%in%hsv.sig1$qtl) #13132 everything included
+    lec_sig = subset(lec_res, lec_res$qtl%in%hsv.sig1$qtl) #13117 included
     lec_sig$P.adj <- p.adjust(lec_sig$P, method = 'fdr')
     
-    lec_sig1 = subset(lec_sig, lec_sig$P.adj <0.05) #3948
+    lec_sig1 = subset(lec_sig, lec_sig$P.adj <0.05) #4943
 
     # Key already built: qtl = var_id_antibody_direction
     llf_keys <- unique(hsv.sig1$qtl1)
     lec_keys <- unique(lec_sig1$qtl1)
-    common   <- intersect(llf_keys, lec_keys) #3943
+    common   <- intersect(llf_keys, lec_keys) #4943
     
     rep_llf <- hsv.sig1[qtl1 %in% common]
     rep_lec <- lec_sig[qtl1 %in% common]
@@ -279,7 +284,7 @@ if (!all(c(opt$lec_phe, opt$lec_vi_bin, opt$lec_hu_bin, opt$llf_vi_promax, opt$l
     fwrite(rep_llf, file.path(opt$out_dir, "hsv_bin_fchange_rep_llf.tsv"), na='', sep = "\t")
     fwrite(rep_lec, file.path(opt$out_dir, "hsv_bin_fchange_rep_lec.tsv"), na='', sep = "\t")
     fwrite(rep_merge, file.path(opt$out_dir, "hsv_bin_fchange_rep_both.tsv"), na='', sep = "\t")
-    message("Replication complete: N = ", length(common))
+    message("Replication complete: N = ", length(common)) #4943
   } else {
     message("Replication skipped (LLF results not available in this run).")
   }
@@ -287,89 +292,93 @@ if (!all(c(opt$lec_phe, opt$lec_vi_bin, opt$lec_hu_bin, opt$llf_vi_promax, opt$l
 
 # total associations
 counts_total <- lec_sig %>% group_by(taxon_species) %>% summarise(total_count = n())
-# 1 Human alphaherpesvirus 1        2049
-# 2 Human alphaherpesvirus 2        1180
-# 3 Human alphaherpesvirus 3         109
-# 4 Human betaherpesvirus 5         8152
-# 5 Human betaherpesvirus 6A          86
-# 6 Human betaherpesvirus 6B          85
-# 7 Human betaherpesvirus 7           18
-# 8 Human gammaherpesvirus 4        1386
-# 9 Human gammaherpesvirus 8          67
+# 1 Human alphaherpesvirus 1        2032
+# 2 Human alphaherpesvirus 2        1156
+# 3 Human alphaherpesvirus 3         115
+# 4 Human betaherpesvirus 5         8189
+# 5 Human betaherpesvirus 6A          82
+# 6 Human betaherpesvirus 6B          77
+# 7 Human betaherpesvirus 7           17
+# 8 Human gammaherpesvirus 4        1390
+# 9 Human gammaherpesvirus 8          59
 
 counts_sig <- rep_merge %>% group_by(taxon_species) %>% summarise(total_count = n())
 counts_sum = inner_join(counts_sig, counts_total, by=c('taxon_species'))
 counts_sum$pct = counts_sum$total_count.x*100/counts_sum$total_count.y
-# 1 Human alphaherpesvirus 1           538          2049 26.3 
-# 2 Human alphaherpesvirus 2           180          1180 15.3 
-# 3 Human alphaherpesvirus 3             5           109  4.59
-# 4 Human betaherpesvirus 5           3050          8152 37.4 
-# 5 Human betaherpesvirus 6A             9            86 10.5 
-# 6 Human betaherpesvirus 6B             7            85  8.24
-# 7 Human gammaherpesvirus 4           153          1386 11.0 
+# 1 Human alphaherpesvirus 1           656          2032 32.3 
+# 2 Human alphaherpesvirus 2           265          1156 22.9 
+# 3 Human alphaherpesvirus 3             7           115  6.09
+# 4 Human betaherpesvirus 5           3739          8189 45.7 
+# 5 Human betaherpesvirus 6A            18            82 22.0 
+# 6 Human betaherpesvirus 6B            15            77 19.5 
+# 7 Human gammaherpesvirus 4           240          1390 17.3 
+# 8 Human gammaherpesvirus 8             2            59  3.39
 sum(counts_sum$total_count.x)
-# [1] 3942
+# [1] 4943
 sum(counts_sum$total_count.y) 
-# [1] 13047
+# [1] 13100
 
 # total viral peptides
 counts_total <- lec_sig[,c('taxon_species','var_id')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(var_id))
-# 1 Human alphaherpesvirus 1          421
-# 2 Human alphaherpesvirus 2          276
-# 3 Human alphaherpesvirus 3           61
-# 4 Human betaherpesvirus 5           585
-# 5 Human betaherpesvirus 6A           41
-# 6 Human betaherpesvirus 6B           42
-# 7 Human betaherpesvirus 7             9
-# 8 Human gammaherpesvirus 4          417
-# 9 Human gammaherpesvirus 8           37
+# 1 Human alphaherpesvirus 1          418
+# 2 Human alphaherpesvirus 2          274
+# 3 Human alphaherpesvirus 3           66
+# 4 Human betaherpesvirus 5           580
+# 5 Human betaherpesvirus 6A           39
+# 6 Human betaherpesvirus 6B           38
+# 7 Human betaherpesvirus 7            10
+# 8 Human gammaherpesvirus 4          420
+# 9 Human gammaherpesvirus 8           35
 
 counts_sig <- rep_merge[,c('taxon_species','var_id')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(var_id))
 counts_sum = inner_join(counts_sig, counts_total, by=c('taxon_species'))
 counts_sum$pct = counts_sum$unique_count.x*100/counts_sum$unique_count.y
-# 1 Human alphaherpesvirus 1            258            421 61.3 
-# 2 Human alphaherpesvirus 2            133            276 48.2 
-# 3 Human alphaherpesvirus 3              5             61  8.20
-# 4 Human betaherpesvirus 5             377            585 64.4 
-# 5 Human betaherpesvirus 6A              6             41 14.6 
-# 6 Human betaherpesvirus 6B              4             42  9.52
-# 7 Human gammaherpesvirus 4             98            417 23.5 
+# 1 Human alphaherpesvirus 1            275            418 65.8 
+# 2 Human alphaherpesvirus 2            169            274 61.7 
+# 3 Human alphaherpesvirus 3              6             66  9.09
+# 4 Human betaherpesvirus 5             386            580 66.6 
+# 5 Human betaherpesvirus 6A             12             39 30.8 
+# 6 Human betaherpesvirus 6B              9             38 23.7 
+# 7 Human gammaherpesvirus 4            149            420 35.5 
+# 8 Human gammaherpesvirus 8              2             35  5.71
+
 sum(counts_sum$unique_count.x)
-# [1] 881
+# [1] 1008
 sum(counts_sum$unique_count.y) 
-# [1] 1843
+# [1] 1870
 
 # Gene symbol
 counts_total <- lec_sig[,c('taxon_species','gene_symbol')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(gene_symbol))
-# 1 Human alphaherpesvirus 1          123
-# 2 Human alphaherpesvirus 2          116
-# 3 Human alphaherpesvirus 3           30
-# 4 Human betaherpesvirus 5           183
-# 5 Human betaherpesvirus 6A           36
-# 6 Human betaherpesvirus 6B           38
-# 7 Human betaherpesvirus 7            13
-# 8 Human gammaherpesvirus 4           74
-# 9 Human gammaherpesvirus 8           19
+# 1 Human alphaherpesvirus 1          121
+# 2 Human alphaherpesvirus 2          118
+# 3 Human alphaherpesvirus 3           31
+# 4 Human betaherpesvirus 5           185
+# 5 Human betaherpesvirus 6A           32
+# 6 Human betaherpesvirus 6B           35
+# 7 Human betaherpesvirus 7            12
+# 8 Human gammaherpesvirus 4           75
+# 9 Human gammaherpesvirus 8           17
 
 counts_sig <- rep_merge[,c('taxon_species','gene_symbol')] %>% group_by(taxon_species) %>% summarize(unique_count = n_distinct(gene_symbol))
 counts_sum = inner_join(counts_sig, counts_total, by=c('taxon_species'))
 counts_sum$pct = counts_sum$unique_count.x*100/counts_sum$unique_count.y
-# 1 Human alphaherpesvirus 1             14            123 11.4 
-# 2 Human alphaherpesvirus 2             12            116 10.3 
-# 3 Human alphaherpesvirus 3              2             30  6.67
-# 4 Human betaherpesvirus 5              43            183 23.5 
-# 5 Human betaherpesvirus 6A              2             36  5.56
-# 6 Human betaherpesvirus 6B              1             38  2.63
-# 7 Human gammaherpesvirus 4             19             74 25.7 
+# 1 Human alphaherpesvirus 1             21            121  17.4
+# 2 Human alphaherpesvirus 2             17            118  14.4
+# 3 Human alphaherpesvirus 3              5             31  16.1
+# 4 Human betaherpesvirus 5              48            185  25.9
+# 5 Human betaherpesvirus 6A              5             32  15.6
+# 6 Human betaherpesvirus 6B              5             35  14.3
+# 7 Human gammaherpesvirus 4             22             75  29.3
+# 8 Human gammaherpesvirus 8              2             17  11.8
 
 sum(counts_sum$unique_count.x)
-# [1] 93
+# [1] 125
 sum(counts_sum$unique_count.y) 
-# [1] 600
+# [1] 614
 
-length(unique(lec_sig$gene_symbol)) #400
-length(unique(lec_sig$var_id)) #1889
-length(unique(rep_merge$gene_symbol)) #80
-length(unique(rep_merge$var_id)) #881
+length(unique(lec_sig$gene_symbol)) #405
+length(unique(lec_sig$var_id)) #1880
+length(unique(rep_merge$gene_symbol)) #106
+length(unique(rep_merge$var_id)) #1008
 
 message("Done. Results written to: ", normalizePath(opt$out_dir))
